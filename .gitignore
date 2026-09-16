@@ -219,3 +219,6 @@ __marimo__/
 
 # LibreOfficeImpress
 .odp#
+
+# OSRM
+/osrm/processed/
