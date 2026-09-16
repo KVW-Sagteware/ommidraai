@@ -1,6 +1,10 @@
+# For manual downloading only
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [string]$Url
+    [string]$Url,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$NoDownload
 )
 
 Set-StrictMode -Version Latest
@@ -11,7 +15,6 @@ function Assert-Command {
         [Parameter(Mandatory = $true)]
         [string]$Name
     )
-
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
         throw "Required command '$Name' was not found in PATH."
     }
@@ -39,45 +42,50 @@ if ($fileName -notmatch '\.osm\.pbf$') {
 }
 
 $targetFile = Join-Path $dataDir $fileName
-if (Test-Path $targetFile) {
-    Write-Host "Removing existing download: $targetFile"
-    Remove-Item -Force $targetFile
+
+# Handle download logic based on the -NoDownload switch
+if ($NoDownload) {
+    if (-not (Test-Path $targetFile)) {
+        throw "The file '$targetFile' was not found. Cannot skip download."
+    }
+    Write-Host "Skipping download as requested. Using existing file: $targetFile"
+} else {
+    if (Test-Path $targetFile) {
+        Write-Host "Removing existing download: $targetFile"
+        Remove-Item -Force $targetFile
+    }
+    Write-Host "Downloading extract into $dataDir"
+    Invoke-WebRequest -Uri $Url -OutFile $targetFile
+    Write-Host 'Step A: download complete'
 }
 
-Write-Host "Downloading extract into $dataDir"
-Invoke-WebRequest -Uri $Url -OutFile $targetFile
+# Fix: Strips '.osm.pbf' correctly instead of leaving '.osm' behind
+$mapStem = $fileName -replace '\.osm\.pbf$', ''
 
-$mapStem = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
+Get-ChildItem -LiteralPath $processedDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "$mapStem.*" } | Remove-Item -Force -ErrorAction SilentlyContinue
 
-Get-ChildItem -LiteralPath $processedDir -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -like "$mapStem.*" } |
-    Remove-Item -Force -ErrorAction SilentlyContinue
-
-Write-Host 'Step A: download complete'
 Write-Host 'Step B: extracting routing graph with osrm-extract'
 docker run --rm `
-    -v "${dataDir}:/data" `
-    -v "${processedDir}:/processed" `
-    osrm/osrm-backend:latest `
-    sh -lc "cd /data && osrm-extract -p /opt/car.lua /data/$fileName"
+  -v "${dataDir}:/data" `
+  -v "${processedDir}:/processed" `
+  osrm/osrm-backend:latest `
+  sh -c "cd /data && osrm-extract -p /opt/car.lua /data/$fileName"
 
-Get-ChildItem -LiteralPath $dataDir -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -like "$mapStem.osrm*" } |
-    ForEach-Object {
-        Move-Item -LiteralPath $_.FullName -Destination $processedDir -Force
-    }
+Get-ChildItem -LiteralPath $dataDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "$mapStem.osrm*" } | ForEach-Object {
+    Move-Item -LiteralPath $_.FullName -Destination $processedDir -Force
+}
 
 Write-Host 'Step C: partitioning graph with osrm-partition'
 docker run --rm `
-    -v "${processedDir}:/processed" `
-    osrm/osrm-backend:latest `
-    sh -lc "cd /processed && osrm-partition $mapStem"
+  -v "${processedDir}:/processed" `
+  osrm/osrm-backend:latest `
+  sh -c "cd /processed && osrm-partition /processed/$mapStem"
 
 Write-Host 'Step D: customizing graph for MLD with osrm-customize'
 docker run --rm `
-    -v "${processedDir}:/processed" `
-    osrm/osrm-backend:latest `
-    sh -lc "cd /processed && osrm-customize $mapStem"
+  -v "${processedDir}:/processed" `
+  osrm/osrm-backend:latest `
+  sh -c "cd /processed && osrm-customize /processed/$mapStem"
 
 Write-Host 'OSRM processing completed successfully.'
 Write-Host "Processed files are available in $processedDir"

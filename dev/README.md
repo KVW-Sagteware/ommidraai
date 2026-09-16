@@ -112,59 +112,23 @@ docker compose exec backend alembic history
 
 # OSRM
 
-## Add map data
-### Linux
-Run this command from the project root to download the map data:
-```bash
-bash ./scripts/setup-osrm.sh "https://download.geofabrik.de/africa/south-africa-latest.osm.pbf"
-```
+## Map data
 
-Replace the url with the desired map data city url
+Map coverage is configured in `osrm/maps.txt`: one Geofabrik `.osm.pbf` URL per line (`#` for comments).
 
-Then add the map to docker-compose.yml like:
-```yaml
-  osrm-south-africa:
-    image: osrm/osrm-backend:latest
-    command: >
-      sh -lc "cd /osrm/processed && osrm-routed --algorithm mld south-africa-latest"
-    volumes:
-      - ./osrm/processed:/osrm/processed:ro
-```
+On `docker compose up`,the `osrm` container automatically:
 
-Or merge the map data like:
-```bash
-  osmium merge berlin-latest.osm.pbf south-africa-latest.osm pbf -o combined-latest.osm.pbf
-```
-Then change the command section in docker-compose.yml to this:
-```yaml
-command: >
-  sh -lc "cd /osrm/processed && osrm-routed --algorithm mld combined-latest"
-```
+1. downloads each missing extract into `osrm/data` (files already present are reused),
+2. merges all listed extracts into a single `merged.osm.pbf` using `osmium`,
+3. builds the routing graph once (`osrm-extract` -> `osrm-partition` -> `osrm-customize`),
+4. starts `osrm-routed --algorithm mld osrm/processed/merged`.
 
-### Windows
-Run this command from the project root to download the map data:
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-osrm.ps1 -Url "https://download.geofabrik.de/africa/south-africa-latest.osm.pbf"
-```
+To change coverage, edit `osrm/maps.txt` and re-run `docker compose up -d --build`.
+To force a rebuild of the merged graph, delete `osrm/processed/merged.osrm*` first.
 
-Replace the url with the desired map data city
+> Note: current OSRM cannot merge already-processed `.osrm` datasets (the old
+> `osrm-merge` tool only supported CH,and has been removed), so extracts are merged
+> *before* extraction into a single dataset.
 
-Then add the map to docker-compose.yml like:
-```yaml
-  osrm-south-africa:
-    image: osrm/osrm-backend:latest
-    command: >
-      sh -lc "cd /osrm/processed && osrm-routed --algorithm mld south-africa-latest"
-    volumes:
-      - ./osrm/processed:/osrm/processed:ro
-```
-
-Or merge the map data like:
-```bash
-  osmium merge berlin-latest.osm.pbf south-africa-latest.osm pbf -o combined-latest.osm.pbf
-```
-Then change the command section in docker-compose.yml to this:
-```yaml
-command: >
-  sh -lc "cd /osrm/processed && osrm-routed --algorithm mld combined-latest"
-```
+The old manual scripts (`scripts/setup-osrm.sh` / `scripts/setup-osrm.ps1`)are still
+available for one-off processing of single extracts, but are no longer required.

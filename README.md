@@ -16,7 +16,9 @@ chmod +x ./scripts/setup-docker.sh
 ```
 3. Log out, then back in, or reboot
 
-4. Start the program
+4. Configure map data downloads in osrm/maps.txt (Url's will automatically be downloaded once the application starts)
+
+5. Start the program
 ```bash
 docker compose up -d --build
 ```
@@ -74,7 +76,11 @@ git clone https://github.com/BroerSakki/ommidraai.git
 cd ommidraai
 ```
 
-### 4. Start the application
+### 4. Configure map data downloads in osrm/maps.txt
+
+In osrm/maps.txt add desired map downloads url's from geofabrik (Url's will automatically be downloaded once the application starts)
+
+### 5. Start the application
 
 From the project directory, run:
 

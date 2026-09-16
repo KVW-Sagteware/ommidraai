@@ -1,0 +1,16 @@
+# List of OpenStreetMap extracts that will be downloaded, merged, and processed
+# into the routing dataset used bythe OSRM service.
+#
+# HOW TO USE
+#   One Geofabrik .osm.pbf URL per line.Lines starting with '#' are ignored.
+#   Add or remove lines to customize which map data you want to route on.
+#
+# WHAT HAPPENS ON 'docker compose up'
+#   1. Each URL is checked against ./osrm/data: files that are already present
+#      are reused (never re-downloaded); missing files are downloaded automatically.
+#   2. All listed extracts are merged into a single merged.osm.pbf and processed
+#      into one routing dataset (merged.osrm).
+#   3. The osrm service starts routing on that merged dataset.
+
+https://download.geofabrik.de/africa/south-africa-latest.osm.pbf
+https://download.geofabrik.de/africa/lesotho-latest.osm.pbf

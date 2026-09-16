@@ -23,18 +23,16 @@ services:
       - backend
 
   osrm:
-    image: osrm/osrm-backend:latest
+    build: ./osrm
 
     restart: unless-stopped
 
-    command: >
-      sh -lc "cd /osrm/processed && osrm-routed --algorithm mld south-africa-latest"
+    command: /usr/local/bin/osrm-entrypoint.sh
 
     volumes:
-      - ./osrm/processed:/osrm/processed:ro
-
-    networks:
-      - default
+      - ./osrm/data:/osrm/data
+      - ./osrm/processed:/osrm/processed
+      - ./osrm/maps.txt:/osrm/maps.txt:ro
 
   db:
     image: postgres:17
