@@ -37,21 +37,6 @@ def me(
     return current_user
 # ---
 
-# Update Username
-# ---
-@router.put("/update", response_model=UserResponse)
-def update_user(
-    user_update: UserUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    return auth_service.update_username(
-        db=db,
-        current_user=current_user,
-        user_update=user_update,
-    )
-# ---
-
 # Register
 # ---
 @router.post("/register", status_code=201)
@@ -177,4 +162,19 @@ def logout(
     return {
         "message": "Logged out"
     }
+# ---
+
+# Update Username
+# ---
+@router.put("/update", response_model=UserResponse)
+def update_user(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return auth_service.update_username(
+        db=db,
+        current_user=current_user,
+        user_update=user_update,
+    )
 # ---

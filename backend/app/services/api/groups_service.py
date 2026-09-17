@@ -61,6 +61,27 @@ def get_user_joined_groups(
     )
 # ---
 
+# Get Group Name
+# ---
+def get_group_name(
+    db: Session,
+    current_user: User,
+    group_id: int,
+) -> str:
+    if user_groups_table.is_in_group(
+        db=db,
+        group_id=group_id,
+        user_id=current_user.id,
+    ):
+        return groups_table.get_group_name(
+            db=db,
+            group_id=group_id,
+        )
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found in selected group",
+        )
 # ---
 
 # Get Group Data

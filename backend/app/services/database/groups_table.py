@@ -123,6 +123,44 @@ def get_group_id(
         # ---
 # ---
 
+# Group Name
+# ---
+def get_group_name(
+    db:Session,
+    group_id: int,
+) -> str:
+    try:
+        # Get Group
+        # ---
+        group: Group = db.scalar(
+            select(Group)
+            .where(
+                Group.id == group_id,
+            )
+        )
+        if group is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Group with id '{group_id}' not found",
+            )
+        # ---
+
+        # Return
+        # ---
+        return group.name
+        # ---
+
+    except SQLAlchemyError:
+        # Database error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Could not retrieve group name"
+        )
+        # ---
+
+# ---
+
 # Create Group
 # ---
 def create_group(

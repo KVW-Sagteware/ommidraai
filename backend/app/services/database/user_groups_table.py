@@ -93,6 +93,42 @@ def get_group_users(
         # ---
 # ---
 
+# Is in Group
+# ---
+def is_in_group(
+    db: Session,
+    group_id: int,
+    user_id: int,
+) -> bool:
+    try:
+        # Get User Group
+        # ---
+        user_group: User_Group = db.scalar(
+            select(User_Group)
+            .where(
+                User_Group.group_id == group_id,
+                User_Group.user_id == user_id,
+            )
+        )
+        if user_group is None:
+            return False
+        # ---
+
+        # Return
+        # ---
+        return True
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Error accessing database",
+        )
+        # ---
+# ---
+
 # Has Users
 # ---
 def has_users(
