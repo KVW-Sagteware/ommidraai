@@ -66,22 +66,13 @@ export function ProfileMenu() {
             className="relative"
         >
             <button
+                type="button"
                 onClick={() => setOpen(!open)}
-                className="
-                    flex
-                    h-12
-                    w-12
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#a8be8f]
-                    text-[#3d3461]
-                    font-bold
-                    transition
-                    hover:scale-105
-                "
-            >
-                {username ? username.charAt(0).toUpperCase() : "U"}
+                aria-label="Open profile menu"
+                aria-expanded={open}
+                className=" flex h-12 w-12 items-center justify-center bg-[#3d3461] 
+                text-2xl font-bold text-[#a8be8f] ">
+                    ☰
             </button>
 
             {open && (
