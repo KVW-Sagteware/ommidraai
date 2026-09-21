@@ -85,7 +85,7 @@ def get_group_data(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.get_group_data(
+    return groups_service.get_group_data(
         db=db,
         group_id=group_id,
         current_user=current_user,

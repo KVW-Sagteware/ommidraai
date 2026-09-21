@@ -1,5 +1,6 @@
 # Base Imports
 # ---
+import importlib
 from fastapi import Depends, HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
 # ---
@@ -16,6 +17,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
 from app.models.group import Group
 from app.models.user_group import User_Group
+from backend.app.models.location import Location
+from backend.app.models.group_location import Group_Location
 # ---
 
 # Import Schemas
@@ -65,11 +68,143 @@ def get_user_joined_groups(
 
 # Get Group Data
 # ---
+ALGORITHMS = {
+    "dijkstra": {
+        "module": "app.algorithms.algoritm",
+        "name": "Dijkstra + Mask",
+    },
+    "greedy": {
+        "module": "app.algorithms.algorithm_greedy",
+        "name": "Greedy Loops",
+    },
+    "ortools": {
+        "module": "app.algorithms.algorithm_ortools",
+        "name": "Optimized (Google OR-Tools)",
+    },
+}
+def _get_algorithm_function(algorithm_name: str):
+    """Resolve an algorithm key to its evaluate_destinations_with_osrm callable.
+
+    Unknown keys fall back to the default Dijkstra implementation so the group
+    data endpoint keeps working even when an unexpected value is supplied.
+    """
+    algorithm_key = algorithm_name.lower() if algorithm_name else "greedy"
+    spec = ALGORITHMS.get(algorithm_key)
+
+    if spec is None:
+        algorithm_key = "greedy"
+        spec = ALGORITHMS["greedy"]
+
+    module = importlib.import_module(spec["module"])
+    return algorithm_key, module.evaluate_destinations_with_osrm
+
 def get_group_data(
     db: Session,
     current_user: User,
+    group_id: int,
+    algorithm_name: str = "greedy",
 ):
-    pass
+    try:
+        # Is member
+        # ---
+        is_member: bool = user_groups_table.is_user_in_group(
+            db=db,
+            user_id=current_user.id,
+            group_id=group_id,
+        )
+        # ---
+
+        # Error if not member
+        # ---
+        if not is_member:
+            raise HTTPException(
+                status_code=403,
+                detail="User is not a member of this group",
+            )
+        # ---
+
+        # Calculate group data
+        # ---
+        users_data = db.execute(
+            select(User, User_Group, Location)
+            .join(User_Group, User.id == User_Group.user_id)
+            .join(Location, Location.id == User.default_location_id) # Assume default location_id is the users location for now
+            .where(User_Group.group_id == group_id)
+        ).all()
+
+        coords = db.execute(
+            select(Group_Location, Location)
+            .join(Group_Location, Location.id == Group_Location.location_id)
+            .where(Group_Location.group_id == group_id)
+        ).all()
+
+        usernames = []
+        starts_data = {}
+        starts_capacities = {}
+        passengers_data = {}
+        destinations_data = {}
+        passenger_count = 0
+    
+        for user, user_group, location in users_data:
+            usernames.append(user.username)
+            if user_group.is_passenger:
+                passengers_data[user.username] = (location.latitude, location.longitude)
+                passenger_count += 1
+            else:
+                starts_data[user.username] = (location.latitude, location.longitude)
+                starts_capacities[user.username] = user_group.car_capacity
+                passenger_count -= user_group.car_capacity
+    
+        for group_location, location in coords:
+            destinations_data[group_location.display_name] = (location.latitude, location.longitude)
+    
+        routing_data = []
+        selected_algorithm = algorithm_name.lower() if algorithm_name else "greedy"
+        if selected_algorithm not in ALGORITHMS:
+            selected_algorithm = "greedy"
+    
+        if starts_data and destinations_data and (passenger_count <= 0):
+            try:
+                _, evaluate_destinations = _get_algorithm_function(selected_algorithm)
+                routing_data = evaluate_destinations(
+                    starts_data=starts_data,
+                    starting_capacities=starts_capacities,
+                    passengers_data=passengers_data,
+                    destinations_data=destinations_data,
+                )
+            except Exception as exc:
+                routing_data = f"Algorithm '{selected_algorithm}' failed: {exc}"
+        else:
+            routing_data = "Input data for routing not valid"
+    
+        return {
+            "users": [
+                {
+                    "user": {"username": u.username, "email": u.email},
+                    "user_group": {"is_passenger": ug.is_passenger, "car_capacity": ug.car_capacity, "role": ug.role},
+                    "location": {"latitude": loc.latitude, "longitude": loc.longitude}
+                }
+                for u, ug, loc in users_data
+            ],
+            "destinations": [
+                {
+                    "group_location": {"display_name": gl.display_name},
+                    "location": {"latitude": loc.latitude, "longitude": loc.longitude}
+                }
+                for gl, loc in coords
+            ],
+            "algorithm": routing_data,
+            "algorithm_name": selected_algorithm,
+            "available_algorithms": [
+                {"id": algorithm_id, "name": spec["name"]}
+                for algorithm_id, spec in ALGORITHMS.items()
+            ],
+        }
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not retrieve user group",
+        )
 # ---
 
 # Get Group Destinations
