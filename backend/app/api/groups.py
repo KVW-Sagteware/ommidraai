@@ -101,9 +101,10 @@ def get_group_destinations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.get_group_destinations(
+    return groups_service.get_group_destinations(
         db=db,
         group_id=group_id,
+        current_user=current_user,
     )
 # ---
 
