@@ -1,23 +1,29 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 export function ProfileMenu() {
     const [open, setOpen] = useState(false);
     const [username, setUsername] = useState<string | null>(null);
+    const [notificationCount, setNotificationCount] = useState(0);
+
     const menuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+
     const t = useTranslations("navigation");
     const tCommon = useTranslations("common");
 
+    // Fetch username and handle outside clicks
     useEffect(() => {
-        const user = Cookies.get('username');
+        const user = Cookies.get("username");
+
         if (user) {
-          setUsername(user);
+            setUsername(user);
         }
 
         function handleClickOutside(event: MouseEvent) {
@@ -39,109 +45,115 @@ export function ProfileMenu() {
         };
     }, []);
 
+    // Fetch notification count
+    useEffect(() => {
+        async function fetchNotifications() {
+            try {
+                const response = await fetch(
+                    "/api/backend/invite"
+                );
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                setNotificationCount(
+                    Array.isArray(data) ? data.length : 0
+                );
+            } catch (err) {
+                console.error(
+                    "Failed to fetch notifications:",
+                    err
+                );
+            }
+        }
+
+        fetchNotifications();
+    }, []);
+
+    // Logout
     const handleLogout = async () => {
         try {
-            const response = await fetch(`/api/backend/auth/logout`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            });
+            const response = await fetch(
+                "/api/backend/auth/logout",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.detail || tCommon("somethingWentWrong"));
+                throw new Error(
+                    data.detail ||
+                    tCommon("somethingWentWrong")
+                );
             }
 
             router.refresh();
-
-            router.push('/login');
+            router.push("/login");
         } catch (err) {
             alert(err);
         }
     };
 
     return (
-        <div
-            ref={menuRef}
-            className="relative"
-        >
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                aria-label="Open profile menu"
-                aria-expanded={open}
-                className=" flex h-12 w-12 items-center justify-center bg-[#3d3461] 
-                text-2xl font-bold text-[#a8be8f] ">
-                    ☰
+        <div ref={menuRef} className="relative">
+            {/* Hamburger Menu Button */}
+            <button type="button" onClick={() => setOpen(!open)} aria-label="Open profile menu"
+                    aria-expanded={open} className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#3d3461] text-2xl
+                    font-bold text-[#a8be8f] transitionhover: bg-[#504574]">
+                ☰
+
+                {/* Notification Badge */}
+                {notificationCount > 0 && (
+                    <span
+                        className="absolute-right-1-top-1 flex h-5 min-w-5 items-center justify-center
+                            rounded-full bg-red-600 px-1 text-xs font-bold text-white">
+                        {notificationCount > 99? "99+": notificationCount}
+                    </span>
+                )}
             </button>
 
+            {/* Dropdown Menu */}
             {open && (
                 <div
-                    className="
-                        absolute
-                        right-0
-                        mt-3
-                        w-56
-                        rounded-2xl
-                        bg-white
-                        shadow-xl
-                        border
-                        border-[#b6cfc6]
-                        overflow-hidden
-                    "
-                >
-                    <div
-                        className="
-                            block
-                            px-5
-                            py-3
-                            text-gray-500
-                            bg-gray-100
-                        "
-                    >
-                      {username ? t("loggedInAs") + username : t("usernameError")}
+                    className=" absolute right-0 z-50 mt-3 w-56 overflow-hidden rounded-2xl border border-[#b6cfc6] bg-white shadow-xl">
+                    {/* Username */}
+                    <div className=" block bg-gray-100 px-5 py-3 text-gray-500">
+                        {username ? t("loggedInAs") + username: t("usernameError")}
                     </div>
 
                     <hr />
 
+                    {/* Profile */}
                     <Link
                         href="/user/profile"
-                        className="
-                            block
-                            px-5
-                            py-3
-                            hover:bg-[#eef5f1]
-                            text-gray-500
-                        "
-                    >
+                        className=" block px-5 py-3 text-gray-500 hover:bg-[#eef5f1]" 
+                        onClick={() => setOpen(false)}>
                         {t("profile")}
-                    </Link>
 
-                    {/*<Link
-                        href="/groups"
-                        className="
-                            block
-                            px-5
-                            py-3
-                            hover:bg-[#eef5f1]
-                        "
-                    >
-                         Groups
-                    </Link>*/}
+                        {notificationCount > 0 && (
+                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+                                {notificationCount > 99? "99+": notificationCount}
+                            </span>
+                        )}
+                    </Link>
 
                     <hr />
 
+                    {/* Logout */}
                     <Link
                         href="/login"
-                        className="
-                            block
-                            px-5
-                            py-3
-                            hover:bg-red-50
-                            text-red-600
-                        "
-                        onClick={handleLogout}
-                    >
+                        className=" block px-5 py-3 text-red-600 hover:bg-red-50"
+                         onClick={async (event) => {
+                            event.preventDefault();
+                            setOpen(false);
+                            await handleLogout();
+                        }}>
                         {t("logout")}
                     </Link>
                 </div>
