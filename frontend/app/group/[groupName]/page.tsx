@@ -10,6 +10,7 @@ import { AddLocationModal } from "@/app/components/groups/add-location-modal";
 import { InviteModal } from "@/app/components/groups/invite-modal";
 import { UpdateUserPropertiesModal } from "@/app/components/groups/update-user-properties-modal";
 import { WorldMap } from "@/app/components/groups/world-map";
+import { GroupChat } from "@/app/components/groups/group-chat";
 import { TrashIcon } from "lucide-react";
 
 type Role = "owner" | "admin" | "member" | "guest";
@@ -997,6 +998,16 @@ export default function GroupPage() {
             </div>
           </div>
         </section>
+
+        {/* ====================================== */}
+        {/* GROUP CHAT */}
+        {/* ====================================== */}
+
+        {groupId && (
+          <div className="mt-8">
+            <GroupChat groupId={groupId} currentUsername={currentUsername} />
+          </div>
+        )}
 
         {/* ====================================== */}
         {/* BOTTOM ACTIONS */}
