@@ -55,7 +55,7 @@ export function GroupCard({
     addRoleSection === true
       ? <div className="flex flex-1 items-center justify-center">
           <div className="rounded-full bg-gray-100 px-2.5 py-1">
-            <h3 className="break-words text-center text-xs font-medium text-black">
+            <h3 className="wrap-break-word text-center text-xs font-medium text-black">
               <span className="inline-block mt-2 px-2.5 py-0.5 text-xs font-medium rounded-full bg-[#a8be8f] text-[#3d3461] capitalize">
               {userRole}
               </span>
@@ -65,11 +65,11 @@ export function GroupCard({
       : ""
 
   return (
-    <div className="flex h-40 w-40 flex-col justify-between rounded-xl border-2 border-[#3d3461] bg-gray-100 p-4 shadow-lg">
+    <div className="flex w-full flex-col justify-between rounded-xl border-2 border-[#3d3461] bg-gray-100 p-4 shadow-lg">
       {roleSection}
 
       <div className="flex flex-1 items-center justify-center">
-        <h3 className="break-words text-center text-lg font-semibold text-black">
+        <h3 className="truncate whitespace-nowrap text-center text-lg font-semibold text-black w-full">
           {groupName}
         </h3>
       </div>

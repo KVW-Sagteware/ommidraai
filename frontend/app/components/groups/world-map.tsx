@@ -359,7 +359,8 @@ export function WorldMap({
             }
 
             // Leaflet depends on `window`, so it is only loaded on the client
-            // (this keeps the component SSR-safe).
+            // (this keeps the component SSR-safe). The ant-path plugin is also
+            // loaded here because its UMD bundle references `window` on import.
             const L = (await import("leaflet")).default;
             await import("leaflet-ant-path");
 
