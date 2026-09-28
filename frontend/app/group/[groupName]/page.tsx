@@ -166,6 +166,7 @@ export default function GroupPage() {
   const [isAlgorithmLoading, setIsAlgorithmLoading] = useState(false);
   const [isKicking, setIsKicking] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showActionsPanel, setShowActionsPanel] = useState(false);
 
   // Loads the current user and the full group dataset (users, destinations,
   // routing output). Throws on failure so each caller can decide how to surface
@@ -219,7 +220,7 @@ export default function GroupPage() {
         setAvailableAlgorithms(groupData.available_algorithms);
       }
     },
-    [groupId, currentUserRole]
+    [groupId]
   );
 
   useEffect(() => {
@@ -253,7 +254,7 @@ export default function GroupPage() {
     return () => {
       cancelled = true;
     };
-  }, [groupId, loadGroupData]);
+  }, [groupId, loadGroupData, tCommon]);
 
   async function kickMember(name: string) {
     const trimmedName = name.trim();
@@ -362,7 +363,7 @@ export default function GroupPage() {
     setActiveModal(null);
   }
 
-  async function leaveGroup() {
+  const leaveGroup = useCallback(async () => {
     if (currentUserRole === "owner") {
       setActiveModal("new-owner");
       return;
@@ -395,7 +396,7 @@ export default function GroupPage() {
     } finally {
       setIsLeaving(false);
     }
-  }
+  }, [currentUserRole, groupId, isLeaving, router, tCommon]);
 
   async function deleteGroup() {
     if (!groupId || isDeleting) return;
@@ -686,6 +687,64 @@ export default function GroupPage() {
     activeModal !== null
       ? modalSettings[activeModal]
       : null;
+
+  const actionItems = useMemo(
+    () => {
+      const items: Array<{
+        label: string;
+        action: () => void;
+        variant: "primary" | "secondary";
+        disabled?: boolean;
+      }> = [];
+
+      if (
+        currentUserRole === "guest" ||
+        currentUserRole === "member" ||
+        currentUserRole === "admin" ||
+        currentUserRole === "owner"
+      ) {
+        items.push({
+          label: t("updateUserProperties"),
+          action: () => setShowUserPropertiesModal(true),
+          variant: "primary",
+        });
+
+        items.push({
+          label: tCommon("leave"),
+          action: leaveGroup,
+          variant: "primary",
+          disabled: isLeaving,
+        });
+      }
+
+      if (currentUserRole === "admin" || currentUserRole === "owner") {
+        items.push({
+          label: tCommon("invite"),
+          action: () => setShowInviteModal(true),
+          variant: "secondary",
+        });
+
+        items.push({
+          label: tCommon("kick"),
+          action: () => setActiveModal("kick"),
+          variant: "secondary",
+          disabled: isKicking,
+        });
+      }
+
+      if (currentUserRole === "owner") {
+        items.push({
+          label: t("deleteGroup"),
+          action: () => setShowDeleteModal(true),
+          variant: "secondary",
+          disabled: isDeleting,
+        });
+      }
+
+      return items;
+    },
+    [currentUserRole, isDeleting, isKicking, isLeaving, leaveGroup, t, tCommon]
+  );
 
   if (loading) {
     return (
@@ -998,14 +1057,7 @@ export default function GroupPage() {
           </div>
         </section>
 
-        {/* ====================================== */}
-        {/* BOTTOM ACTIONS */}
-        {/* ====================================== */}
-
-        <section className="mt-8 flex items-center justify-between gap-3 border-t border-gray-200 pt-6">
-
-          {/* BACK BUTTON */}
-
+        <section className="mt-8 flex items-start justify-between gap-4 border-t border-gray-200 pt-6">
           <button
             type="button"
             onClick={() => router.back()}
@@ -1014,78 +1066,47 @@ export default function GroupPage() {
             ← {tCommon("back")}
           </button>
 
-          {/* RIGHT SIDE ACTIONS */}
+          <div className="flex w-full max-w-[560px] flex-col items-end">
+            <button
+              type="button"
+              aria-expanded={showActionsPanel}
+              aria-controls="group-action-panel"
+              onClick={() => setShowActionsPanel((visible) => !visible)}
+              className="w-full rounded-2xl bg-[#403568] px-6 py-3 text-2xl font-bold text-white shadow-md transition hover:bg-[#342b55] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#403568]/25 active:scale-[0.98]"
+            >
+              Actions
+            </button>
 
-          <div className="flex flex-wrap justify-end gap-3">
-
-            {/* ============================== */}
-            {/* MEMBER */}
-            {/* ============================== */}
-
-            {(currentUserRole === "guest" || currentUserRole === "member" || currentUserRole === "admin" || currentUserRole === "owner") && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowUserPropertiesModal(true)}
-                  className="rounded-lg bg-[#3d3461] px-5 py-3 font-semibold text-white shadow transition hover:bg-[#30294d]"
-                >
-                  {t("updateUserProperties")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={leaveGroup}
-                  disabled={isLeaving}
-                  className="rounded-lg bg-[#3d3461] px-5 py-3 font-semibold text-white shadow transition hover:bg-[#30294d] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {tCommon("leave")}
-                </button>
-              </>
-            )}
-
-            {/* ============================== */}
-            {/* ADMIN */}
-            {/* ============================== */}
-
-            {(currentUserRole === "admin" || currentUserRole === "owner") && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowInviteModal(true)}
-                  className="rounded-lg bg-green-600/80 px-5 py-3 font-semibold text-white shadow transition hover:bg-green-700"
-                >
-                  {tCommon("invite")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveModal("kick")}
-                  disabled={isKicking}
-                  className="rounded-lg bg-green-600/80 px-5 py-3 font-semibold text-white shadow transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {tCommon("kick")}
-                </button>
-              </>
-            )}
-
-            {/* ============================== */}
-            {/* OWNER */}
-            {/* ============================== */}
-
-            {currentUserRole === "owner" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteModal(true)}
-                  disabled={isDeleting}
-                  className="rounded-lg bg-green-600/80 px-5 py-3 font-semibold text-white shadow transition hover:bg-green-700"
-                >
-                  {t("deleteGroup")}
-                </button>
-              </>
+            {showActionsPanel && (
+              <div
+                id="group-action-panel"
+                className="mt-5 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <div className="w-full">
+                  {actionItems.map((item, index) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.action}
+                      disabled={item.disabled}
+                      className={`flex w-full items-center justify-between border-b border-slate-200 px-5 py-4 text-left text-[1.05rem] font-semibold transition last:border-b-0 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50 ${
+                        item.variant === "primary"
+                          ? "bg-[#403568] text-white hover:bg-[#342b55]"
+                          : "bg-[#31b566] text-white hover:bg-[#2aa35a]"
+                      } ${index === actionItems.length - 1 ? "border-b-0" : ""}`}
+                    >
+                      <span>{item.label}</span>
+                      <span aria-hidden="true" className="text-2xl leading-none">
+                        ›
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </section>
+
       </div>
 
       {/* ====================================== */}

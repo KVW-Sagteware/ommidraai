@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as LeafletMap, LatLngBounds, LayerGroup, PointExpression } from "leaflet";
 import polyline from "@mapbox/polyline";
 import "leaflet/dist/leaflet.css";
-import "leaflet-ant-path";
 import { useTranslations } from "next-intl";
 import { renderToString } from "react-dom/server";
 import DriverIcon from "./ui/Driver";
@@ -355,9 +354,14 @@ export function WorldMap({
         let cancelled = false;
 
         async function initMap() {
+            if (typeof window === "undefined") {
+                return;
+            }
+
             // Leaflet depends on `window`, so it is only loaded on the client
             // (this keeps the component SSR-safe).
             const L = (await import("leaflet")).default;
+            await import("leaflet-ant-path");
 
             if (cancelled || !mapContainerRef.current || mapRef.current) {
                 return;
