@@ -35,6 +35,53 @@ from app.services.database import invites_table
 from app.services.database import users_table
 # ---
 
+# Decline Invitation
+# ---
+def decline_invite(
+    db: Session,
+    current_user: User,
+    group_id: int,
+) -> str:
+    try:
+        # Get Invite
+        # ---
+        invite:Invite = invites_table.get_invitation_to_group(
+            db=db,
+            group_id=group_id,
+            user_id=current_user.id,
+        )
+        if invite is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Invite not found",
+            )
+        # ---
+
+        # Delete Invite
+        # ---
+        if invites_table.delete_invite(
+            db=db,
+            invite=invite,
+        ):
+            return "Declined Invite"
+        # ---
+
+        # Return
+        # ---
+        return "Invite not declined"
+        # ---
+
+    except SQLAlchemyError:
+
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Error declining invite",
+        )
+        # ---
+# ---
+
 # Invite User
 # ---
 def invite_user(
