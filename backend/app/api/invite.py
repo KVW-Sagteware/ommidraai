@@ -137,11 +137,26 @@ def generate_invite_code(
 def join_with_invite_code(
     join_code: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     return invites_service.join_with_invite_code(
         db=db,
         current_user=current_user,
         code=int(join_code),
+    )
+# ---
+
+# Delete Invite Code
+# ---
+@router.delete("/code/delete/{invite_code}")
+def delete_invite_code(
+    invite_code: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return invites_service.delete_invite_code(
+        db=db,
+        current_user=current_user,
+        code=invite_code,
     )
 # ---
