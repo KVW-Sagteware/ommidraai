@@ -235,3 +235,71 @@ def join_with_invite_code(
         )
         # ---
 # ---
+
+# Delete Invite Code
+# ---
+def delete_invite_code(
+    db: Session,
+    current_user: User,
+    code: int,
+) -> str:
+    try:
+        # Get Invite Code
+        # ---
+        invite_code:Invite_Code = invite_codes_table.get_invite_code(
+            db=db,
+            code=code,
+        )
+        # ---
+
+        # Check Permissions
+        # ---
+        if not user_roles.can_manage_user(
+            actor=user_groups_table.get_user_group(
+                db=db,
+                user_group_select=user_group_schemas.UserGroupSelect(
+                    group_id=invite_code.group_id,
+                    user_id=current_user.id,
+                )
+            ).role,
+            target=invite_code.role,
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied",
+            )
+        # ---
+
+        # Check Existence
+        # ---
+        if invite_code is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Invite code not found",
+            )
+        # ---
+
+        # Delete Invite Code
+        # ---
+        invite_codes_table.delete_invite_code(
+            db=db,
+            invite_code=invite_code,
+        )
+        # ---
+
+        # Return
+        # ---
+        return f"Deleted code {code}"
+        # ---
+    
+    except SQLAlchemyError:
+
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Invite code was not deleted"
+        )
+        # ---
+# ---
