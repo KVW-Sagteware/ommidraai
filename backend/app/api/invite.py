@@ -105,7 +105,7 @@ def invite_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return invite_service.create_invite(
+    return invites_service.invite_user(
         db=db,
         current_user=current_user,
         group_id=group_id,
