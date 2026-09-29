@@ -1058,7 +1058,6 @@ export default function GroupPage() {
           </div>
         </section>
 
-        <section className="mt-8 flex items-start justify-between gap-4 border-t border-gray-200 pt-6">
         {/* ====================================== */}
         {/* GROUP CHAT */}
         {/* ====================================== */}
@@ -1068,7 +1067,6 @@ export default function GroupPage() {
             <GroupChat groupId={groupId} currentUsername={currentUsername} />
           </div>
         )}
-        </section>
 
         {/* ====================================== */}
         {/* BOTTOM ACTIONS */}
