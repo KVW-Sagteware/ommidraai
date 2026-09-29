@@ -88,7 +88,7 @@ def decline_invite(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return invite_service.decline_invite(
+    return invites_service.decline_invite(
         db=db,
         current_user=current_user,
         group_id=group_id,
