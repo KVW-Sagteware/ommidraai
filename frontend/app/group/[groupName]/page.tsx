@@ -1068,6 +1068,7 @@ export default function GroupPage() {
             <GroupChat groupId={groupId} currentUsername={currentUsername} />
           </div>
         )}
+        </section>
 
         {/* ====================================== */}
         {/* BOTTOM ACTIONS */}
