@@ -10,6 +10,7 @@ import { AddLocationModal } from "@/app/components/groups/add-location-modal";
 import { InviteModal } from "@/app/components/groups/invite-modal";
 import { UpdateUserPropertiesModal } from "@/app/components/groups/update-user-properties-modal";
 import { WorldMap } from "@/app/components/groups/world-map";
+import { GroupChat } from "@/app/components/groups/group-chat";
 import { TrashIcon } from "lucide-react";
 
 type Role = "owner" | "admin" | "member" | "guest";
@@ -1057,7 +1058,24 @@ export default function GroupPage() {
           </div>
         </section>
 
-        <section className="mt-8 flex items-start justify-between gap-4 border-t border-gray-200 pt-6">
+        {/* ====================================== */}
+        {/* GROUP CHAT */}
+        {/* ====================================== */}
+
+        {groupId && (
+          <div className="mt-8">
+            <GroupChat groupId={groupId} currentUsername={currentUsername} />
+          </div>
+        )}
+
+        {/* ====================================== */}
+        {/* BOTTOM ACTIONS */}
+        {/* ====================================== */}
+
+        <section className="mt-8 flex items-center justify-between gap-3 border-t border-gray-200 pt-6">
+
+          {/* BACK BUTTON */}
+
           <button
             type="button"
             onClick={() => router.back()}
