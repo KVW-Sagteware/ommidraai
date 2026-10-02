@@ -94,6 +94,38 @@ def get_invite_code(
             detail="Could not retrieve invite code",
         )
         # ---
+
+def get_invite_code_by_group(
+    db: Session,
+    group_id: int,
+    role: user_roles.InviteRole
+) -> Invite_Code:
+    try:
+        # Get Invite Code
+        # ---
+        invite_code:Invite_Code = db.scalar(
+            select(Invite_Code)
+            .where(
+                Invite_Code.group_id == group_id,
+                Invite_Code.role == role,
+            )
+        )
+        # ---
+
+        # Return
+        # ---
+        return invite_code
+        # ---
+    
+    except SQLAlchemyError:
+
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Error getting invite code",
+        )
+        # ---
 # ---
 
 # Create Invite Code
@@ -117,6 +149,19 @@ def add_invite_code(
     db: Session,
     invite_code_create: Invite_Code_Create, 
 ) -> Invite_Code:
+    # Check Existence
+    # ---
+    test_invite_code:Invite_Code = get_invite_code_by_group(
+        db=db,
+        group_id=invite_code_create.group_id,
+        role=invite_code_create.role,
+    )
+    if test_invite_code is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Matching invite code already exists"
+        )
+    # ---
     while True:
         try:
             # Create New Invite Code
@@ -171,7 +216,7 @@ def delete_invite_code(
     try:
         # Store Code
         # ---
-        code: invite_code.code
+        code:int = invite_code.code
         # ---
 
         # Update Database
