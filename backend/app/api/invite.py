@@ -73,7 +73,7 @@ def accept_invite(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return invite_service.accept_invite(
+    return invites_service.accept_invite(
         db=db,
         current_user=current_user,
         group_id=group_id,
