@@ -2,6 +2,7 @@
 # ---
 from fastapi import Depends, HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
+from typing import List
 # ---
 
 # Database Imports
@@ -33,6 +34,41 @@ from app.services.database import user_groups_table
 from app.services.database import groups_table
 from app.services.database import invites_table
 from app.services.database import users_table
+# ---
+
+# Get Incoming Invites
+# ---
+
+# ---
+
+# Get Sent Invites
+# ---
+def get_sent_invites(
+    db: Session,
+    current_user: User,
+) -> List[Invite]:
+    try:
+        # Get Invites
+        # ---
+        invites:List[Invite] = invites_table.get_invitations_by_origin(
+            db=db,
+            origin_id=current_user.id,
+        )
+        # ---
+
+        # Return
+        # ---
+        return invites
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Could not get invites",
+        )
+        # ---
 # ---
 
 # Accept Invitation

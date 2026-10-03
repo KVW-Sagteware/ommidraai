@@ -54,12 +54,12 @@ def get_user_invites_no_slash(
 
 # Get Pending Invites
 # ---
-@router.get("/pending")
-def get_user_pending_invites(
+@router.get("/sent")
+def get_user_sent_invites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return invite_service.get_pending_invites(
+    return invites_service.get_sent_invites(
         db=db,
         current_user=current_user,
     )
