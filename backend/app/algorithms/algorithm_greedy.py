@@ -24,7 +24,7 @@ def evaluate_destinations_with_osrm(starts_data, starting_capacities, passengers
     ranking = []
     
     for d in destinations:
-        # Clone active driver capacities for this destination run
+        # Step 1: Clone active driver capacities for this destination run
         current_capacities = dict(starting_capacities)
         driver_paths = {s: [s] for s in start_nodes}
         driver_accumulated_distances = {s: 0 for s in start_nodes}
