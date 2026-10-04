@@ -2,6 +2,7 @@
 # ---
 from fastapi import Depends, HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
+from typing import List
 # ---
 
 # Database Imports
@@ -33,6 +34,100 @@ from app.services.database import user_groups_table
 from app.services.database import groups_table
 from app.services.database import invites_table
 from app.services.database import users_table
+# ---
+
+# Get Incoming Invites
+# ---
+
+# ---
+
+# Get Sent Invites
+# ---
+def get_sent_invites(
+    db: Session,
+    current_user: User,
+) -> List[Invite]:
+    try:
+        # Get Invites
+        # ---
+        invites:List[Invite] = invites_table.get_invitations_by_origin(
+            db=db,
+            origin_id=current_user.id,
+        )
+        # ---
+
+        # Return
+        # ---
+        return invites
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Could not get invites",
+        )
+        # ---
+# ---
+
+# Accept Invitation
+# ---
+def accept_invite(
+    db: Session,
+    current_user: User,
+    group_id: int,
+) -> str:
+    try:
+        # Get Invite
+        # ---
+        invite:Invite = invites_table.get_invitation_to_group(
+            db=db,
+            group_id=group_id,
+            user_id=current_user.id,
+        )
+        if invite is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Invite not found",
+            )
+        # ---
+
+        # Add to group
+        # ---
+        user_group_create:user_group_schemas.UserGroupCreate=user_group_schemas.UserGroupCreate(
+            user_id=current_user.id,
+            group_id=group_id,
+            role=invite.role,
+            car_capacity=0,
+            is_passenger=False,
+        )
+        user_groups_table.add_user(
+            db=db,
+            user_group_create=user_group_create,
+        )
+        # ---
+
+        # Delete Invite
+        # ---
+        if invites_table.delete_invite(
+            db=db,
+            invite=invite,
+        ):
+            return "Accepted invite removed"
+        else:
+            return "Invite not removed"
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Invite not accepted",
+        )
+        # ---
 # ---
 
 # Decline Invitation

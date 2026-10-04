@@ -1,0 +1,16 @@
+Cleanup Plan
+
+1. Refactor Backend - Izak, Morne
+2. Fix notifications - Jean
+3. Fix frontend error display - Ruan
+4. Componantize frontend - MG
+5. Homepage whitespace on group cards - Jean
+
+Implementation Plan
+
+1. Preset locations - Izak, Morne
+2. Presentation building/Video - Ruan
+
+Additional
+
+1. Rating system - ?
