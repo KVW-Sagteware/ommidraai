@@ -123,7 +123,25 @@ def get_invitations_by_user(
     db: Session,
     user_id: int,
 ) -> List[Invite]:
-    pass
+    try:
+        # Get Invitations
+        # ---
+        return db.scalars(
+            select(Invite)
+            .where(
+                Invite.user_id == user_id,
+            )
+        ).all()
+        # ---
+    
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Could not retrieve invites"
+        )
+        # ---
 
 def get_invitations_by_origin(
     db: Session,
