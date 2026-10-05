@@ -1,6 +1,7 @@
 # Base Imports
 # ---
 import importlib
+from backend.app.schemas.location import LocationCreate
 from fastapi import Depends, HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
 # ---
@@ -330,6 +331,63 @@ def search_group_destinations(
     # Return
     # ---
     return group_destinations
+    # ---
+# ---
+
+# Add Location to Group
+# ---
+def add_group_location(
+    db: Session,
+    current_user: User,
+    group_id: int,
+    location: LocationCreate,
+    display_name: str,
+):
+    # Check if display name is provided
+    # ---
+    if display_name is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Display Name required"
+            )
+    # ---
+    
+    # Check if user is apart of group
+    # ---
+    user_group = user_groups_table.get_user_group(
+        db=db,
+        user_group_select=user_group_schemas.UserGroupSelect(
+            group_id=group_id,
+            user_id=current_user.id,
+        )
+    )
+    if user_group is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not in group",
+        )
+    # ---
+
+    # Check permissions
+    # ---
+    if not user_roles.can_manage_locations(
+        role=user_group.role,
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Permission denied",
+        )
+    # ---
+
+    # Add Location to Group
+    # ---
+    return group_locations_table.add_group_location(
+        db=db,
+        location=location,
+        current_user=current_user,
+        group_id=group_id,
+        display_name=display_name,
+    )
     # ---
 # ---
 

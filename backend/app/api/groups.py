@@ -150,7 +150,7 @@ def add_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.add_group_location(
+    return groups_service.add_group_location(
         db=db,
         location=location,
         current_user=current_user,
