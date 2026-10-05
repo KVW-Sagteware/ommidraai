@@ -6,6 +6,7 @@ interface DeleteLocationModalProps {
   isOpen: boolean;
   locationName: string;
   isDeleting: boolean;
+  error: string | null;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -14,6 +15,7 @@ export function DeleteLocationModal({
   isOpen,
   locationName,
   isDeleting,
+  error,
   onClose,
   onConfirm,
 }: DeleteLocationModalProps) {
@@ -64,6 +66,12 @@ export function DeleteLocationModal({
         {/* ========================================= */}
         {/* BUTTONS */}
         {/* ========================================= */}
+
+        {error && (
+          <p className="mb-4 text-sm font-semibold text-red-600" role="alert">
+            {error}
+          </p>
+        )}
 
         <div className="flex justify-end gap-3">
           {/* Cancel */}

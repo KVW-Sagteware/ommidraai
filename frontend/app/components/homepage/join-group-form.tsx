@@ -10,7 +10,9 @@ interface JoinGroupFormProps {
 
 export function JoinGroupForm({ onJoin }: JoinGroupFormProps) {
   const t = useTranslations("home");
+  const tCommon = useTranslations("common");
   const [joining, setJoining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,9 +21,14 @@ export function JoinGroupForm({ onJoin }: JoinGroupFormProps) {
     if (!joinCode) return;
 
     setJoining(true);
+    setError(null);
     try {
       await onJoin(joinCode);
       form.reset();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
+      );
     } finally {
       setJoining(false);
     }
@@ -53,6 +60,11 @@ export function JoinGroupForm({ onJoin }: JoinGroupFormProps) {
         {joining && <Spinner className="h-4 w-4 text-[#3d3461]" />}
         {t("joinGroup")}
       </button>
+      {error && (
+        <p className="text-sm font-semibold text-red-600 sm:basis-full" role="alert">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

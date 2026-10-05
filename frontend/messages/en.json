@@ -198,7 +198,7 @@
     "memberNotFound": "Member not found.",
     "ownerCannotBeKicked": "The owner cannot be kicked.",
     "locationAlreadyAdded": "That location has already been added.",
-    "enterExistingAdmin": "You must enter the name of an existing admin.",
+    "enterExistingAdmin": "User does not exist",
     "deleteGroupTitle": "Delete this group?",
     "deleteGroupDescription": "Are you sure you want to delete \"{groupName}\"? This will remove all members and locations. This action cannot be undone.",
     "deleteLocation": "Delete location",

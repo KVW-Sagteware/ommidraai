@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AddGroupModal } from "@/app/components/homepage/model/add-model";
@@ -9,9 +10,16 @@ import { DeleteLocationModal } from "@/app/components/groups/delete-location-mod
 import { AddLocationModal } from "@/app/components/groups/add-location-modal";
 import { InviteModal } from "@/app/components/groups/invite-modal";
 import { UpdateUserPropertiesModal } from "@/app/components/groups/update-user-properties-modal";
-import { WorldMap } from "@/app/components/groups/world-map";
 import { GroupChat } from "@/app/components/groups/group-chat";
 import { TrashIcon } from "lucide-react";
+
+const WorldMap = dynamic(
+  () =>
+    import("@/app/components/groups/world-map").then(
+      (module) => module.WorldMap
+    ),
+  { ssr: false }
+);
 
 type Role = "owner" | "admin" | "member" | "guest";
 
@@ -145,11 +153,15 @@ export default function GroupPage() {
   const [algorithm, setAlgorithm] = useState<ApiAlgorithmEntry[] | null>(null);
   const [currentUsername, setCurrentUsername] = useState("");
   const [loading, setLoading] = useState(!!groupId);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null);
+  const [deleteLocationError, setDeleteLocationError] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(
     groupId ? null : t("missingGroupId")
   );
 
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -172,7 +184,8 @@ export default function GroupPage() {
   // Loads the current user and the full group dataset (users, destinations,
   // routing output). Throws on failure so each caller can decide how to surface
   // the error — the initial load shows the full-page error state, while
-  // user-triggered reloads (algorithm switch, adding a location) alert instead.
+  // user-triggered reloads (algorithm switch, adding a location) can surface
+  // their own inline error state.
   const loadGroupData = useCallback(
     async (algorithmName: string) => {
       if (!groupId) return;
@@ -271,13 +284,11 @@ export default function GroupPage() {
     );
 
     if (!member) {
-      alert(t("memberNotFound"));
-      return;
+      throw new Error(t("memberNotFound"));
     }
 
     if (member.role === "owner") {
-      alert(t("ownerCannotBeKicked"));
-      return;
+      throw new Error(t("ownerCannotBeKicked"));
     }
 
     if (!groupId || isKicking) return;
@@ -307,10 +318,8 @@ export default function GroupPage() {
 
       setActiveModal(null);
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : tCommon("somethingWentWrong")
+      throw new Error(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     } finally {
       setIsKicking(false);
@@ -332,9 +341,7 @@ export default function GroupPage() {
     );
 
     if (!admin) {
-      alert(
-        t("enterExistingAdmin")
-      );
+      setModalError(t("enterExistingAdmin"));
       return;
     }
 
@@ -366,12 +373,14 @@ export default function GroupPage() {
 
   const leaveGroup = useCallback(async () => {
     if (currentUserRole === "owner") {
+      setModalError(null);
       setActiveModal("new-owner");
       return;
     }
 
     if (!groupId || isLeaving) return;
 
+    setActionError(null);
     setIsLeaving(true);
 
     try {
@@ -389,10 +398,8 @@ export default function GroupPage() {
 
       router.push("/");
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : tCommon("somethingWentWrong")
+      setActionError(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     } finally {
       setIsLeaving(false);
@@ -403,6 +410,7 @@ export default function GroupPage() {
     if (!groupId || isDeleting) return;
 
     setIsDeleting(true);
+    setDeleteGroupError(null);
 
     try {
       const response = await fetch(
@@ -420,10 +428,8 @@ export default function GroupPage() {
       setShowDeleteModal(false);
       router.push("/");
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : tCommon("somethingWentWrong")
+      setDeleteGroupError(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     } finally {
       setIsDeleting(false);
@@ -440,11 +446,12 @@ export default function GroupPage() {
     if (!groupId || algorithmName === selectedAlgorithm) return;
 
     setIsAlgorithmLoading(true);
+    setActionError(null);
 
     try {
       await loadGroupData(algorithmName);
     } catch (err) {
-      alert(
+      setActionError(
         err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     } finally {
@@ -455,10 +462,11 @@ export default function GroupPage() {
   // Re-fetches the group data after a location was added so the locations
   // section and the map show the new destination.
   async function refreshAfterAddLocation() {
+    setActionError(null);
     try {
       await loadGroupData(selectedAlgorithm);
     } catch (err) {
-      alert(
+      setActionError(
         err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     }
@@ -487,8 +495,8 @@ export default function GroupPage() {
         throw new Error(data?.detail || tCommon("somethingWentWrong"));
       }
 
-      setShowUserPropertiesModal(false);
       await loadGroupData(selectedAlgorithm);
+      setShowUserPropertiesModal(false);
     } finally {
       setIsUpdatingUserProperties(false);
     }
@@ -496,6 +504,7 @@ export default function GroupPage() {
 
   // Opens the confirmation modal for removing a location from the group.
   function removeLocation(locationName: string) {
+    setDeleteLocationError(null);
     setLocationToDelete(locationName);
     setShowDeleteLocationModal(true);
   }
@@ -507,6 +516,7 @@ export default function GroupPage() {
     if (!groupId || !locationToDelete || isDeletingLocation) return;
 
     setIsDeletingLocation(true);
+    setDeleteLocationError(null);
 
     try {
       const response = await fetch(
@@ -525,10 +535,8 @@ export default function GroupPage() {
       setLocationToDelete(null);
       await refreshAfterAddLocation();
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : tCommon("somethingWentWrong")
+      setDeleteLocationError(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
       );
     } finally {
       setIsDeletingLocation(false);
@@ -673,9 +681,10 @@ export default function GroupPage() {
   };
 
   function handleModalCreate(value: string) {
+    setModalError(null);
+
     if (activeModal === "kick") {
-      kickMember(value);
-      return;
+      return kickMember(value);
     }
 
     if (activeModal === "new-owner") {
@@ -727,7 +736,10 @@ export default function GroupPage() {
 
         items.push({
           label: tCommon("kick"),
-          action: () => setActiveModal("kick"),
+          action: () => {
+            setModalError(null);
+            setActiveModal("kick");
+          },
           variant: "secondary",
           disabled: isKicking,
         });
@@ -736,7 +748,10 @@ export default function GroupPage() {
       if (currentUserRole === "owner") {
         items.push({
           label: t("deleteGroup"),
-          action: () => setShowDeleteModal(true),
+          action: () => {
+            setDeleteGroupError(null);
+            setShowDeleteModal(true);
+          },
           variant: "secondary",
           disabled: isDeleting,
         });
@@ -794,6 +809,12 @@ export default function GroupPage() {
             </div>
           </div>
         </header>
+
+        {actionError && (
+          <p className="mb-6 text-sm font-semibold text-red-600" role="alert">
+            {actionError}
+          </p>
+        )}
 
         {/* ====================================== */}
         {/* LOCATIONS + MAP */}
@@ -1134,8 +1155,12 @@ export default function GroupPage() {
       {currentModal && (
         <AddGroupModal
           isOpen={activeModal !== null}
-          onClose={() => setActiveModal(null)}
+          onClose={() => {
+            setActiveModal(null);
+            setModalError(null);
+          }}
           onCreate={handleModalCreate}
+          error={modalError}
           title={currentModal.title}
           description={currentModal.description}
           label={currentModal.label}
@@ -1161,8 +1186,12 @@ export default function GroupPage() {
         isOpen={showDeleteModal}
         groupName={groupName}
         isDeleting={isDeleting}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteGroupError(null);
+        }}
         onConfirm={deleteGroup}
+        error={deleteGroupError}
       />
 
       <UpdateUserPropertiesModal
@@ -1186,9 +1215,11 @@ export default function GroupPage() {
           isOpen={showDeleteLocationModal}
           locationName={locationToDelete}
           isDeleting={isDeletingLocation}
+          error={deleteLocationError}
           onClose={() => {
             setShowDeleteLocationModal(false);
             setLocationToDelete(null);
+            setDeleteLocationError(null);
           }}
           onConfirm={confirmDeleteLocation}
         />

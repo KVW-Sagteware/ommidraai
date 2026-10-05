@@ -34,36 +34,32 @@ export default function Home() {
   };
 
   const createGroup = async (groupName: string) => {
-    try {
-      const response = await fetch(`/api/backend/groups/${groupName}/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+    const response = await fetch(`/api/backend/groups/${encodeURIComponent(groupName)}/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Something went wrong");
-
-      setIsAddGroupModalOpen(false);
-      await owned.refresh();
-    } catch (err) {
-      alert(err);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(data?.detail || "Something went wrong");
     }
+
+    await owned.refresh();
+    setIsAddGroupModalOpen(false);
   };
 
   const joinGroup = async (joinCode: string) => {
-    try {
-      const response = await fetch(`/api/backend/invite/code/join/${joinCode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+    const response = await fetch(`/api/backend/invite/code/join/${encodeURIComponent(joinCode)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Something went wrong");
-
-      await joined.refresh();
-    } catch (err) {
-      alert(err);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(data?.detail || "Something went wrong");
     }
+
+    await joined.refresh();
   };
 
   return (

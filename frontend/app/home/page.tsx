@@ -68,8 +68,7 @@ export default function HomePage() {
     );
 
     if (alreadyExists) {
-      alert("A group with that name already exists.");
-      return;
+      throw new Error("A group with that name already exists.");
     }
 
     // Add the new group

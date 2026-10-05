@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 
 interface AddGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (value: string) => void;
+  onCreate: (value: string) => void | Promise<void>;
+  error?: string | null;
 
   title?: string;
   description?: string;
@@ -19,6 +20,7 @@ export function AddGroupModal({
   isOpen,
   onClose,
   onCreate,
+  error: externalError = null,
 
   title,
   description,
@@ -27,6 +29,8 @@ export function AddGroupModal({
   confirmText,
 }: AddGroupModalProps) {
   const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const tModal = useTranslations("modal");
   const tCommon = useTranslations("common");
 
@@ -41,15 +45,6 @@ export function AddGroupModal({
   const resolvedConfirmText = confirmText ?? tCommon("ok");
 
   /*
-   * Clear the input whenever the modal opens.
-   */
-  useEffect(() => {
-    if (isOpen) {
-      setValue("");
-    }
-  }, [isOpen]);
-
-  /*
    * Don't render anything when the modal is closed.
    */
   if (!isOpen) {
@@ -59,9 +54,7 @@ export function AddGroupModal({
   /*
    * Submit button
    */
-  const handleSubmit = (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedValue = value.trim();
@@ -71,11 +64,18 @@ export function AddGroupModal({
       return;
     }
 
-    // Send the value back to the page
-    onCreate(trimmedValue);
-
-    // Clear input
-    setValue("");
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onCreate(trimmedValue);
+      setValue("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : tCommon("somethingWentWrong")
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /*
@@ -83,6 +83,7 @@ export function AddGroupModal({
    */
   const handleClose = () => {
     setValue("");
+    setError(null);
     onClose();
   };
 
@@ -146,9 +147,16 @@ export function AddGroupModal({
               placeholder={resolvedPlaceholder}
               required
               autoFocus
-              className="w-full rounded-xl border-2 border-[#b6cfc6] px-4 py-3 text-gray-700 outline-none transition focus:border-[#3d3461]"
+              disabled={submitting}
+              className="w-full rounded-xl border-2 border-[#b6cfc6] px-4 py-3 text-gray-700 outline-none transition focus:border-[#3d3461] disabled:opacity-60"
             />
           </div>
+
+          {(error || externalError) && (
+            <p className="mb-4 text-sm font-semibold text-red-600" role="alert">
+              {error || externalError}
+            </p>
+          )}
 
           {/* ========================================= */}
           {/* BUTTONS */}
@@ -159,7 +167,8 @@ export function AddGroupModal({
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-xl border-2 border-[#b6cfc6] px-6 py-3 font-semibold text-[#3d3461] transition hover:bg-[#eef5f1]"
+              disabled={submitting}
+              className="rounded-xl border-2 border-[#b6cfc6] px-6 py-3 font-semibold text-[#3d3461] transition hover:bg-[#eef5f1] disabled:opacity-60"
             >
               {tCommon("cancel")}
             </button>
@@ -167,7 +176,8 @@ export function AddGroupModal({
             {/* Confirm */}
             <button
               type="submit"
-              className="rounded-xl bg-[#3d3461] px-6 py-3 font-semibold text-white transition hover:bg-[#544a85]"
+              disabled={submitting}
+              className="rounded-xl bg-[#3d3461] px-6 py-3 font-semibold text-white transition hover:bg-[#544a85] disabled:opacity-60"
             >
               {resolvedConfirmText}
             </button>

@@ -9,6 +9,8 @@ import Cookies from 'js-cookie';
 export function ProfileMenu() {
     const [open, setOpen] = useState(false);
     const [username, setUsername] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [loggingOut, setLoggingOut] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const t = useTranslations("navigation");
@@ -40,6 +42,10 @@ export function ProfileMenu() {
     }, []);
 
     const handleLogout = async () => {
+        if (loggingOut) return;
+
+        setLoggingOut(true);
+        setError(null);
         try {
             const response = await fetch(`/api/backend/auth/logout`, {
                 method: 'POST',
@@ -56,7 +62,11 @@ export function ProfileMenu() {
 
             router.push('/login');
         } catch (err) {
-            alert(err);
+            setError(
+                err instanceof Error ? err.message : tCommon("somethingWentWrong")
+            );
+        } finally {
+            setLoggingOut(false);
         }
     };
 
@@ -131,19 +141,29 @@ export function ProfileMenu() {
 
                     <hr />
 
-                    <Link
-                        href="/login"
+                    {error && (
+                        <p className="px-5 py-3 text-sm font-semibold text-red-600" role="alert">
+                            {error}
+                        </p>
+                    )}
+
+                    <button
+                        type="button"
+                        disabled={loggingOut}
                         className="
+                            w-full
                             block
                             px-5
                             py-3
+                            text-left
                             hover:bg-red-50
                             text-red-600
+                            disabled:opacity-60
                         "
-                        onClick={handleLogout}
+                        onClick={() => void handleLogout()}
                     >
                         {t("logout")}
-                    </Link>
+                    </button>
                 </div>
             )}
         </div>

@@ -198,7 +198,7 @@
     "memberNotFound": "Lid is nie gevind nie.",
     "ownerCannotBeKicked": "Die eienaar kan nie uit geskop word nie.",
     "locationAlreadyAdded": "Daardie plek is reeds bygevoeg.",
-    "enterExistingAdmin": "Jy moet die naam van 'n bestaande admin invoer.",
+    "enterExistingAdmin": "Gebruiker bestaan nie",
     "deleteGroupTitle": "Verwyder hierdie groep?",
     "deleteGroupDescription": "Is jy seker jy wil \"{groupName}\" verwyder? Dit sal alle lede en liggings verwyder. Hierdie aksie kan nie teruggedraai word nie.",
     "deleteLocation": "Verwyder plek",

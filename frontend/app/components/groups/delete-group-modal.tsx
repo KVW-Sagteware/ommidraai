@@ -6,6 +6,7 @@ interface DeleteGroupModalProps {
   isOpen: boolean;
   groupName: string;
   isDeleting: boolean;
+  error: string | null;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -14,6 +15,7 @@ export function DeleteGroupModal({
   isOpen,
   groupName,
   isDeleting,
+  error,
   onClose,
   onConfirm,
 }: DeleteGroupModalProps) {
@@ -64,6 +66,12 @@ export function DeleteGroupModal({
         {/* ========================================= */}
         {/* BUTTONS */}
         {/* ========================================= */}
+
+        {error && (
+          <p className="mb-4 text-sm font-semibold text-red-600" role="alert">
+            {error}
+          </p>
+        )}
 
         <div className="flex justify-end gap-3">
           {/* Cancel */}
