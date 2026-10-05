@@ -26,6 +26,7 @@ RUN sed -i \
     && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /usr/local/bin/osrm-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/osrm-entrypoint.sh
 RUN chmod +x /usr/local/bin/osrm-entrypoint.sh
 
 WORKDIR /osrm
