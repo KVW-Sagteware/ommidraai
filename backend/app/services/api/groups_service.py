@@ -363,13 +363,18 @@ def delete_group(
         # Get Group
         # ---
         group_id: int= groups_table.get_group_id(
-                db=db,
-                group_name=group_name,
+            db=db,
+            group_name=group_name,
         )
         group: group = groups_table.get_group(
             db=db,
             group_id=group_id,
         )
+        if group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Group not found",
+            )
         # ---
 
         # Get User Group
