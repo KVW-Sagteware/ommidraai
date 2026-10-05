@@ -65,6 +65,47 @@ def get_user_joined_groups(
     )
 # ---
 
+# Get Group Name
+# ---
+def get_group_name(
+    db: Session,
+    group_id: int,
+    current_user: User,
+):
+    # Check if user is apart of group
+    # ---
+    is_member: bool = user_groups_table.is_user_in_group(
+        db=db,
+        user_id=current_user.id,
+        group_id=group_id,
+    )
+
+    if not is_member:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not a member of this group",
+        )
+    # ---
+
+    # Get group
+    # ---
+    group = groups_table.get_group(
+        db=db,
+        group_id=group_id,
+    )
+
+    if group is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Group not found",
+        )
+    # ---
+
+    # Return
+    # ---
+    return group.name
+    # ---
+
 # Get Group Data
 # ---
 ALGORITHMS = {
