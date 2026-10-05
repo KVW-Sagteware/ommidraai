@@ -30,7 +30,7 @@ if [[ ! -f "$MAPS_FILE" ]]; then
 fi
 
 # --- 1. Read the map list (skip comments and blank lines) ----------------------------
-mapfile -t urls < <(grep -vE '^[[:space:]]*(#|$)' "$MAPS_FILE" || true)
+mapfile -t urls < <(sed 's/\r$//' "$MAPS_FILE" | grep -vE '^[[:space:]]*(#|$)' || true)
 
 if [[ ${#urls[@]} -eq 0 ]]; then
     echo "ERROR: No map URLs found in $MAPS_FILE." >&2
@@ -59,9 +59,13 @@ for raw_url in "${urls[@]}"; do
     if [[ -f "$target" ]]; then
         echo "      already downloaded; skipping download(reused from osrm/data)"
     else
-        echo "      downloading... ( $url )"
-        curl -fSL --retry 3 --retry-delay 2 -o "$target" "$url"
-        echo "      download complete)"
+        partial_target="${target}.part"
+        rm -f "$partial_target"
+        echo "      downloading (progress is shown below): $url"
+        curl -fL --show-error --retry 3 --retry-delay 2 --progress-bar \
+            -o "$partial_target" "$url"
+        mv "$partial_target" "$target"
+        echo "      download complete: $file_name"
     fi
 done
 
