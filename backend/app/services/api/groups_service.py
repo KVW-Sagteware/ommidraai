@@ -65,8 +65,6 @@ def get_user_joined_groups(
     )
 # ---
 
-# ---
-
 # Get Group Data
 # ---
 ALGORITHMS = {
@@ -254,9 +252,44 @@ def get_group_destinations(
 # ---
 def search_group_destinations(
     db: Session,
+    group_id: int,
     current_user: User,
+    display_name: str,
 ):
-    pass
+    # Check if user is apart of group
+    # ---
+    user_group = user_groups_table.get_user_group(
+        db=db,
+        user_group_select=user_group_schemas.UserGroupSelect(
+            group_id=group_id,
+            user_id=current_user.id,
+        )
+    )
+    if user_group is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not in group",
+        )
+    # ---
+    
+    # Get Group Destinations
+    # ---
+    group_destinations = group_locations_table.get_group_locations(
+        db=db,
+        group_id=group_id,
+        display_name=display_name,
+    )
+    if group_destinations is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Group destinations not found",
+        )
+    # ---
+    
+    # Return
+    # ---
+    return group_destinations
+    # ---
 # ---
 
 # Create Group

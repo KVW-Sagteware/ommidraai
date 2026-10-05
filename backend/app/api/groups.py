@@ -117,10 +117,11 @@ def search_group_destinations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.search_group_destinations(
+    return groups_service.search_group_destinations(
         db=db,
         group_id=group_id,
         display_name=display_name,
+        current_user=current_user,
     )
 # ---
 
