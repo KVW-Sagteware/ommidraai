@@ -38,7 +38,27 @@ from app.services.database import users_table
 
 # Get Incoming Invites
 # ---
+def get_incoming_invites(
+    db: Session,
+    current_user: User,
+) -> List[Invite]:
+    try:
+        # Get Invites
+        # ---
+        return invites_table.get_invitations_by_user(
+            db=db,
+            user_id=current_user.id,
+        )
+        # ---
 
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="Could not get invites",
+        )
+        # ---
 # ---
 
 # Get Sent Invites
@@ -50,15 +70,10 @@ def get_sent_invites(
     try:
         # Get Invites
         # ---
-        invites:List[Invite] = invites_table.get_invitations_by_origin(
+        return invites_table.get_invitations_by_origin(
             db=db,
             origin_id=current_user.id,
         )
-        # ---
-
-        # Return
-        # ---
-        return invites
         # ---
 
     except SQLAlchemyError:
