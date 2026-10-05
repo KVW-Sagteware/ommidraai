@@ -19,6 +19,7 @@ from app.models.user_group import User_Group
 from app.models.invite_code import Invite_Code
 from app.models.invite import Invite
 from app.models.group_location import Group_Location
+from app.models.chat_message import Chat_Message
 # ---
 
 # Setup Config
