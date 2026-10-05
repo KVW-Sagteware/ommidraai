@@ -33,6 +33,8 @@ def can_manage_user(actor: UserRole, target: UserRole) -> bool:
 	if actor == UserRole.owner:
 		return True
 
+	print(f"\n\n---\nActor: {actor}\nTarget: {target}\n---\n\n")
+
 	if actor == UserRole.admin:
 		return target in {
 			UserRole.member,

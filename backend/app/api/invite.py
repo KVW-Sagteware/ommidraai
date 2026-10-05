@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session
 # Import Local Libraries
 # ---
 from app.database import get_db
-from app.services import invite_service
-from app.services.api import invites_service
+from app.services.api import invite_service
 from app.security import get_current_user
 from app.models.user import User
 from app.schemas import invite
@@ -33,7 +32,7 @@ def get_user_invites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return invite_service.get_current_user_invites(
+    return invite_service.get_incoming_invites(
         db=db,
         current_user=current_user
 	)
@@ -46,7 +45,7 @@ def get_user_invites_no_slash(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return invite_service.get_current_user_invites(
+    return invite_service.get_incoming_invites(
         db=db,
         current_user=current_user
 	)
@@ -54,12 +53,12 @@ def get_user_invites_no_slash(
 
 # Get Pending Invites
 # ---
-@router.get("/pending")
-def get_user_pending_invites(
+@router.get("/sent")
+def get_user_sent_invites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return invite_service.get_pending_invites(
+    return invite_service.get_sent_invites(
         db=db,
         current_user=current_user,
     )
@@ -105,7 +104,7 @@ def invite_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return invite_service.create_invite(
+    return invite_service.invite_user(
         db=db,
         current_user=current_user,
         group_id=group_id,
@@ -123,7 +122,7 @@ def generate_invite_code(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return invites_service.create_invite_code(
+    return invite_service.create_invite_code(
         db=db,
         current_user=current_user,
         group_id=group_id,
@@ -137,11 +136,26 @@ def generate_invite_code(
 def join_with_invite_code(
     join_code: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    return invites_service.join_with_invite_code(
+    return invite_service.join_with_invite_code(
         db=db,
         current_user=current_user,
         code=int(join_code),
+    )
+# ---
+
+# Delete Invite Code
+# ---
+@router.delete("/code/delete/{invite_code}")
+def delete_invite_code(
+    invite_code: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return invite_service.delete_invite_code(
+        db=db,
+        current_user=current_user,
+        code=invite_code,
     )
 # ---

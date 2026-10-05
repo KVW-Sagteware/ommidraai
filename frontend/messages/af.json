@@ -203,7 +203,15 @@
     "deleteGroupDescription": "Is jy seker jy wil \"{groupName}\" verwyder? Dit sal alle lede en liggings verwyder. Hierdie aksie kan nie teruggedraai word nie.",
     "deleteLocation": "Verwyder plek",
     "deleteLocationTitle": "Verwyder plek?",
-    "deleteLocationDescription": "Is jy seker jy wil \"{location}\" van hierdie groep verwyder?"
+    "deleteLocationDescription": "Is jy seker jy wil \"{location}\" van hierdie groep verwyder?",
+    "chatTitle": "Groepklets",
+    "chatLoading": "Laai klets…",
+    "chatEmpty": "Nog geen boodskappe nie. Sê hallo!",
+    "chatPlaceholder": "Tik 'n boodskap…",
+    "chatSend": "Stuur",
+    "chatSending": "Stuur…",
+    "chatLoadFailed": "Kon nie kletsboodskappe laai nie.",
+    "chatSendFailed": "Kon nie die boodskap stuur nie."
   },
   "map": {
     "searchPlaceholder": "Soek vir 'n plek (bv. Centurion, Pretoria)",

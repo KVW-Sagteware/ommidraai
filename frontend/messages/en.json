@@ -203,7 +203,15 @@
     "deleteGroupDescription": "Are you sure you want to delete \"{groupName}\"? This will remove all members and locations. This action cannot be undone.",
     "deleteLocation": "Delete location",
     "deleteLocationTitle": "Delete location?",
-    "deleteLocationDescription": "Are you sure you want to remove \"{location}\" from this group?"
+    "deleteLocationDescription": "Are you sure you want to remove \"{location}\" from this group?",
+    "chatTitle": "Group Chat",
+    "chatLoading": "Loading chat…",
+    "chatEmpty": "No messages yet. Say hello!",
+    "chatPlaceholder": "Type a message…",
+    "chatSend": "Send",
+    "chatSending": "Sending…",
+    "chatLoadFailed": "Failed to load chat messages.",
+    "chatSendFailed": "Failed to send the message."
   },
   "map": {
     "searchPlaceholder": "Search for a place (e.g. Centurion, Pretoria)",
