@@ -532,3 +532,57 @@ def delete_group(
         )
         # ---
 # ---
+
+# Leave User Group by ID
+# ---
+def leave_user_group_by_id(
+    db: Session,
+    current_user: User,
+    group_id: int,
+) -> str:
+    try:
+        # Get Group
+        # ---
+        group: Group = groups_table.get_group(
+            db=db,
+            group_id=group_id,
+        )
+        if group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Group not found",
+            )
+        # ---
+
+        # Get User Group
+        # ---
+        user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=current_user.id,
+            )
+        )
+        if user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not in group",
+            )
+        # ---
+
+        # Remove User from Group
+        # ---
+        return user_groups_table.remove_user(
+            db=db,
+            user_group=user_group,
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User was not removed from group",
+        )

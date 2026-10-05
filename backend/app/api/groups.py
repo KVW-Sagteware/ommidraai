@@ -167,7 +167,7 @@ def leave_group(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.leave_user_group_by_id(
+    return groups_service.leave_user_group_by_id(
         db=db,
         current_user=current_user,
         group_id=group_id,
