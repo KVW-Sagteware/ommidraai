@@ -1,13 +1,11 @@
 # Base Imports
 # ---
 from fastapi import Depends, HTTPException
-from fastapi_pagination.ext.sqlalchemy import paginate
 from typing import List
 # ---
 
 # Database Imports
 # ---
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 # ---
