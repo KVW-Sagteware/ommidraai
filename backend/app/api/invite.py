@@ -33,7 +33,7 @@ def get_user_invites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return invite_service.get_current_user_invites(
+    return invites_service.get_incoming_invites(
         db=db,
         current_user=current_user
 	)
@@ -46,7 +46,7 @@ def get_user_invites_no_slash(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return invite_service.get_current_user_invites(
+    return invites_service.get_incoming_invites(
         db=db,
         current_user=current_user
 	)
