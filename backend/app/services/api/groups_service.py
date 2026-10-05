@@ -300,6 +300,19 @@ def create_group(
     group_name: str,
 ) -> str:
     try:
+        #Check if group already exists
+        # ---
+        existing_group = groups_table.get_group(
+            db=db,
+            group_name=group_name,
+        )
+
+        if existing_group is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Group already exists",
+            )
+
         # Create Named Group
         # ---
         group_id: int = groups_table.create_group(
