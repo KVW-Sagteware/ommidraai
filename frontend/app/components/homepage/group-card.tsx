@@ -44,6 +44,7 @@ export function GroupCard({
   // Otherwise use the name prop.
   const groupName = name ?? groupItem?.Group?.name ?? t("unnamedGroup");
   const userRole = groupItem?.User_Group?.role ?? t("unknownRole");
+  const showRole = addRoleSection && userRole.toLowerCase() !== "owner";
 
 
   const buttonClasses =
@@ -51,7 +52,7 @@ export function GroupCard({
       ? "bg-[#a8be8f] hover:bg-[#b6cfc6]"
       : "bg-[#a8be8f] hover:bg-[#b6cfc6]";
 
-  const roleSection = 
+  /*const roleSection = 
     addRoleSection === true
       ? <div className="flex flex-1 items-center justify-center">
           <div className="rounded-full bg-gray-100 px-2.5 py-1">
@@ -62,11 +63,21 @@ export function GroupCard({
             </h3>
           </div>
         </div>
-      : ""
+      : "" */
 
   return (
     <div className="flex w-full flex-col justify-between rounded-xl border-2 border-[#3d3461] bg-gray-100 p-4 shadow-lg">
-      {roleSection}
+      {showRole ? (
+        <div className="flex h-8 flex-1 items-center justify-center">
+          <div className="rounded-full bg-gray-100 px-2.5 py-1">
+            <span className="inline-block rounded-full bg-[#a8be8f] px-2.5 py-0.5 text-xs font-medium capitalize text-[#3d3461]">
+              {userRole}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="h-8" />
+      )}
 
       <div className="flex flex-1 items-center justify-center">
         <h3 className="truncate whitespace-nowrap text-center text-lg font-semibold text-black w-full">

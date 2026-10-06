@@ -104,15 +104,15 @@ export function ProfileMenu() {
         <div ref={menuRef} className="relative">
             {/* Hamburger Menu Button */}
             <button type="button" onClick={() => setOpen(!open)} aria-label="Open profile menu"
-                    aria-expanded={open} className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#3d3461] text-2xl
-                    font-bold text-[#a8be8f] transitionhover: bg-[#504574]">
+                    aria-expanded={open} className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#3d3461] text-3xl
+                    font-bold text-[#a8be8f] transitionhover: bg-[#3d3461]">
                 ☰
 
                 {/* Notification Badge */}
                 {notificationCount > 0 && (
                     <span
-                        className="absolute-right-1-top-1 flex h-5 min-w-5 items-center justify-center
-                            rounded-full bg-red-600 px-1 text-xs font-bold text-white">
+                        className="absolute-right-1-top-2 flex h-5 min-w-5 items-center justify-center
+                            rounded-full bg-red-600 px-1.5 text-xs font-bold text-white shadow-md">
                         {notificationCount > 99? "99+": notificationCount}
                     </span>
                 )}
@@ -158,6 +158,7 @@ export function ProfileMenu() {
                     </Link>
                 </div>
             )}
+            
         </div>
     );
 }
