@@ -12,8 +12,6 @@ from sqlalchemy.orm import Session
 # ---
 from app.security import get_current_user
 from app.database import get_db
-from app.services import group_service
-from app.services.api import groups_service
 # ---
 
 # Import Models
@@ -28,6 +26,11 @@ from app.schemas.user_group import UserGroupResponse
 from app.schemas.group import GroupCreate
 from app.schemas.location import LocationCreate
 from app.schemas import user_roles
+# ---
+
+# Import Services
+# ---
+from app.services.api import groups_service
 # ---
 
 # Router Setup
