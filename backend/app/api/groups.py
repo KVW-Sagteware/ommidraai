@@ -12,8 +12,6 @@ from sqlalchemy.orm import Session
 # ---
 from app.security import get_current_user
 from app.database import get_db
-from app.services import group_service
-from app.services.api import groups_service
 # ---
 
 # Import Models
@@ -28,6 +26,11 @@ from app.schemas.user_group import UserGroupResponse
 from app.schemas.group import GroupCreate
 from app.schemas.location import LocationCreate
 from app.schemas import user_roles
+# ---
+
+# Import Services
+# ---
+from app.services.api import groups_service
 # ---
 
 # Router Setup
@@ -69,7 +72,7 @@ def get_group_name(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.get_group_name(
+    return groups_service.get_group_name(
         db=db,
         group_id=group_id,
         current_user=current_user
@@ -85,7 +88,7 @@ def get_group_data(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.get_group_data(
+    return groups_service.get_group_data(
         db=db,
         group_id=group_id,
         current_user=current_user,
@@ -101,9 +104,10 @@ def get_group_destinations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.get_group_destinations(
+    return groups_service.get_group_destinations(
         db=db,
         group_id=group_id,
+        current_user=current_user,
     )
 # ---
 
@@ -116,10 +120,11 @@ def search_group_destinations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.search_group_destinations(
+    return groups_service.search_group_destinations(
         db=db,
         group_id=group_id,
         display_name=display_name,
+        current_user=current_user,
     )
 # ---
 
@@ -148,7 +153,7 @@ def add_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.add_group_location(
+    return groups_service.add_group_location(
         db=db,
         location=location,
         current_user=current_user,
@@ -165,7 +170,7 @@ def leave_group(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return group_service.leave_user_group_by_id(
+    return groups_service.leave_user_group_by_id(
         db=db,
         current_user=current_user,
         group_id=group_id,
@@ -182,7 +187,7 @@ def update_member_role(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.update_user_role(
+    return groups_service.update_user_role(
         db=db,
         current_user=current_user,
         group_name=group_name,
@@ -201,7 +206,7 @@ def update_user_properties(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.update_user_group_data(
+    return groups_service.update_user_group_data(
         db=db,
         current_user=current_user,
         group_id=group_id,
@@ -219,7 +224,7 @@ def remove_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.remove_group_location(
+    return groups_service.remove_group_location(
         db=db,
         current_user=current_user,
         location_name=location_name,
@@ -251,7 +256,7 @@ def kick_user_from_group(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.remove_group_user(
+    return groups_service.remove_group_user(
         db=db,
         current_user=current_user,
         group_id=group_id,
