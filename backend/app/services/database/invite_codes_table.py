@@ -55,6 +55,30 @@ def get_sent_codes(
         # ---
 # ---
 
+def get_invite_codes_by_group(
+    db: Session,
+    group_id: int,
+) -> List[Invite_Code]:
+    try:
+        # Get Invite Codess
+        # ---
+        return db.scalars(
+            select(Invite_Code)
+            .where(
+                Invite_Code.group_id == group_id
+            )
+        ).all()
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=500,
+            detail="Could not get invite codes",
+        )
+        # ---
+
 # Get Invite Code
 # ---
 def get_invite_code(
