@@ -1,14 +1,12 @@
 # Base Imports
 # ---
 import importlib
-from backend.app.schemas.location import LocationCreate
 from fastapi import Depends, HTTPException
 from fastapi_pagination.ext.sqlalchemy import paginate
 # ---
 
 # Database Imports
 # ---
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 # ---
@@ -18,8 +16,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
 from app.models.group import Group
 from app.models.user_group import User_Group
-from backend.app.models.location import Location
-from backend.app.models.group_location import Group_Location
+from app.models.location import Location
+from app.models.group_location import Group_Location
+from app.schemas.location import LocationCreate
 # ---
 
 # Import Schemas
@@ -32,7 +31,7 @@ from app.schemas import user_group as user_group_schemas
 # ---
 from app.services.database import groups_table
 from app.services.database import user_groups_table
-from backend.app.services.database import group_locations_table
+from app.services.database import group_locations_table, users_table, locations_table
 # ---
 
 # Get User Groups
@@ -41,28 +40,20 @@ def get_user_owned_groups(
     db: Session,
     current_user: User,
 ):
-    return paginate(db,
-        select(User_Group, Group)
-        .join(Group, Group.id == User_Group.group_id)
-        .where(
-            User_Group.user_id == current_user.id,
-            User_Group.role == user_roles.UserRole.owner,
-        )
-        .order_by(User_Group.group_id.desc())
+    return groups_table.get_user_groups(
+        db=db,
+        user_id=current_user.id,
+        is_owned=True,
     )
 
 def get_user_joined_groups(
     db: Session,
     current_user: User,
 ):
-    return paginate(db,
-        select(User_Group, Group)
-        .join(Group, Group.id == User_Group.group_id)
-        .where(
-            User_Group.user_id == current_user.id,
-            User_Group.role != user_roles.UserRole.owner,
-        )
-        .order_by(User_Group.group_id.desc())
+    return groups_table.get_user_groups(
+        db=db,
+        user_id=current_user.id,
+        is_owned=False,
     )
 # ---
 
@@ -75,7 +66,7 @@ def get_group_name(
 ):
     # Check if user is apart of group
     # ---
-    is_member: bool = user_groups_table.is_user_in_group(
+    is_member: bool = user_groups_table.is_member_of_group(
         db=db,
         user_id=current_user.id,
         group_id=group_id,
@@ -148,7 +139,7 @@ def get_group_data(
     try:
         # Is member
         # ---
-        is_member: bool = user_groups_table.is_user_in_group(
+        is_member: bool = user_groups_table.is_member_of_group(
             db=db,
             user_id=current_user.id,
             group_id=group_id,
@@ -166,18 +157,15 @@ def get_group_data(
 
         # Calculate group data
         # ---
-        users_data = db.execute(
-            select(User, User_Group, Location)
-            .join(User_Group, User.id == User_Group.user_id)
-            .join(Location, Location.id == User.default_location_id) # Assume default location_id is the users location for now
-            .where(User_Group.group_id == group_id)
-        ).all()
+        users_data = users_table.get_user_data(
+            db=db,
+            group_id=group_id,
+        )
 
-        coords = db.execute(
-            select(Group_Location, Location)
-            .join(Group_Location, Location.id == Group_Location.location_id)
-            .where(Group_Location.group_id == group_id)
-        ).all()
+        coords = group_locations_table.get_location_data(
+            db=db,
+            group_id=group_id,
+        )
 
         usernames = []
         starts_data = {}
@@ -334,6 +322,67 @@ def search_group_destinations(
     # ---
 # ---
 
+# Create Group
+# ---
+def create_group(
+    db: Session,
+    current_user: User,
+    group_name: str,
+) -> str:
+    try:
+        #Check if group already exists
+        # ---
+        existing_group = groups_table.get_group_by_name(
+            db=db,
+            group_name=group_name,
+        )
+
+        if existing_group is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Group already exists",
+            )
+        # ---
+
+        # Create Named Group
+        # ---
+        group_id: int = groups_table.create_group(
+            db=db,
+            group_name=group_name,
+        ).id
+        # ---
+
+        # Build Schema
+        # ---
+        user_group_create: user_group_schemas.UserGroupCreate = user_group_schemas.UserGroupCreate(
+            user_id= current_user.id,
+            group_id= group_id,
+            role= user_roles.UserRole.owner,
+            car_capacity= 0,
+            is_passenger= False,
+        )
+        # ---
+
+        # Add Current User
+        # ---
+        user_groups_table.add_user(
+            db=db,
+            user_group_create=user_group_create,
+        )
+        # ---
+
+        # Return
+        # ---
+        return f"Group '{group_name}' was created"
+        # ---
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Group not created",
+        )
+# ---
+
 # Add Location to Group
 # ---
 def add_group_location(
@@ -379,76 +428,23 @@ def add_group_location(
         )
     # ---
 
+    # Create Location
+    # ---
+    location_id = locations_table.create_location(
+        db=db,
+        location=location,
+    )
+    # ---
+
     # Add Location to Group
     # ---
     return group_locations_table.add_group_location(
         db=db,
-        location=location,
-        current_user=current_user,
+        location_id=location_id,
         group_id=group_id,
         display_name=display_name,
     )
     # ---
-# ---
-
-# Create Group
-# ---
-def create_group(
-    db: Session,
-    current_user: User,
-    group_name: str,
-) -> str:
-    try:
-        #Check if group already exists
-        # ---
-        existing_group = groups_table.get_group(
-            db=db,
-            group_name=group_name,
-        )
-
-        if existing_group is not None:
-            raise HTTPException(
-                status_code=400,
-                detail="Group already exists",
-            )
-
-        # Create Named Group
-        # ---
-        group_id: int = groups_table.create_group(
-            db=db,
-            group_name=group_name,
-        ).id
-        # ---
-
-        # Build Schema
-        # ---
-        user_group_create: user_group_schemas.UserGroupCreate = user_group_schemas.UserGroupCreate(
-            user_id= current_user.id,
-            group_id= group_id,
-            role= user_roles.UserRole.owner,
-            car_capacity= 0,
-            is_passenger= False,
-        )
-        # ---
-
-        # Add Current User
-        # ---
-        user_groups_table.add_user(
-            db=db,
-            user_group_create=user_group_create,
-        )
-        # ---
-
-        # Return
-        # ---
-        return f"Group '{group_name}' was created"
-        # ---
-    except SQLAlchemyError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="Group not created",
-        )
 # ---
 
 # Delete Group
@@ -465,7 +461,7 @@ def delete_group(
             db=db,
             group_name=group_name,
         )
-        group: group = groups_table.get_group(
+        group = groups_table.get_group(
             db=db,
             group_id=group_id,
         )
@@ -533,6 +529,152 @@ def delete_group(
         # ---
 # ---
 
+# Update User Role
+# ---
+def update_user_role(
+    db: Session,
+    current_user: User,
+    group_name: str,
+    user_name: str,
+    role: user_roles.UserRole,
+) -> str:
+    try:
+        # Get Group
+        # ---
+        group_id: int = groups_table.get_group_id(
+            db=db,
+            group_name=group_name,
+        )
+        if group_id is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Group not found",
+            )
+        # ---
+
+        # Get User
+        # ---
+        user_id: int = users_table.get_user_id(
+            db=db,
+            user_name=user_name,
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+        # ---
+
+        # Get User Group
+        # ---
+        user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=user_id,
+            )
+        )
+        if user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not in group",
+            )
+        # ---
+
+        # Get Current User Group
+        # ---
+        current_user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=current_user.id,
+            )
+        )
+        if current_user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Current user not in group",
+            )
+        # ---
+
+        # Check Current User Permissions
+        # ---
+        if not user_roles.can_manage_user(
+            actor=current_user_group.role,
+            target=user_group.role,
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied",
+            )
+        # ---
+
+        # Update User Role
+        # ---
+        return user_groups_table.update_user_role(
+            db=db,
+            user_group=user_group,
+            role=role,
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User role was not updated",
+        )
+        # ---
+# ---
+
+# Update User Group Data
+# ---
+def update_user_group_data(
+    db: Session,
+    current_user: User,
+    group_id: int,
+    is_passenger: bool,
+    car_capacity: int,
+) -> str:
+    try:
+        # Get User Group
+        # ---
+        user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=current_user.id,
+            )
+        )
+        if user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not in group",
+            )
+        # ---
+
+        # Update User Group Data
+        # ---
+        return user_groups_table.update_user_group_data(
+            db=db,
+            user_group=user_group,
+            is_passenger=is_passenger,
+            car_capacity=car_capacity,
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User group data was not updated",
+        )
+        # ---
+
 # Leave User Group by ID
 # ---
 def leave_user_group_by_id(
@@ -586,3 +728,166 @@ def leave_user_group_by_id(
             status_code=400,
             detail="User was not removed from group",
         )
+
+# Delete location from group
+# ---
+def remove_group_location(
+    db: Session,
+    current_user: User,
+    group_id: int,
+    location_name: str,
+) -> str:
+    try:
+        # Check if user is apart of group
+        # ---
+        user_group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=current_user.id,
+            )
+        )
+        if user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not in group",
+            )
+        # ---
+
+        # Check if location exists in group
+        # ---
+        location = group_locations_table.get_group_locations(
+            db=db,
+            group_id=group_id,
+            display_name=location_name,
+        )
+        if location is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Location not found in group",
+            )
+        # ---
+
+        # Check permissions
+        # ---
+        if not user_roles.can_manage_locations(
+            role=user_group.role,
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied",
+            )
+        # ---
+
+        # Remove Location from Group
+        # ---
+        return group_locations_table.remove_group_location(
+            db=db,
+            group_id=group_id,
+            display_name=location_name,
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Group location was not removed",
+        )
+
+# Remove user from group
+# ---
+def remove_group_user(
+    db: Session,
+    current_user: User,
+    group_id: int,
+    username: str,
+) -> str:
+    try:
+        # Get Group
+        # ---
+        group: Group = groups_table.get_group(
+            db=db,
+            group_id=group_id,
+        )
+        if group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Group not found",
+            )
+        # ---
+
+        # Get User
+        # ---
+        user_id: int = users_table.get_user_id(
+            db=db,
+            user_name=username,
+        )
+        if user_id is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+        # ---
+
+        # Get User Group
+        # ---
+        user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=user_id,
+            )
+        )
+        if user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="User not in group",
+            )
+        # ---
+
+        # Get Current User Group
+        # ---
+        current_user_group: User_Group = user_groups_table.get_user_group(
+            db=db,
+            user_group_select=user_group_schemas.UserGroupSelect(
+                group_id=group_id,
+                user_id=current_user.id,
+            )
+        )
+        if current_user_group is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Current user not in group",
+            )
+        # ---
+
+        # Check Current User Permissions
+        # ---
+        if not user_roles.can_manage_user(
+            actor=current_user_group.role,
+            target=user_group.role,
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied",
+            )
+        # ---
+
+        # Remove User from Group
+        # ---
+        return user_groups_table.remove_user(
+            db=db,
+            user_group=user_group,
+        )
+
+    except SQLAlchemyError:
+            # Database Error
+            # ---
+            db.rollback()
+            raise HTTPException(
+                status_code=400,
+                detail="User was not removed from location",
+            )

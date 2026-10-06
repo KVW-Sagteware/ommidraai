@@ -368,14 +368,27 @@ def remove_user(
         db.commit()
         # ---
 
-        # Return
+        # Delete Group if No Users Left
         # ---
-        return has_users(
+        if has_users(
             db=db,
             group_id=group_id,
-        )
+        ) is False:
+            groups_table.delete_group(
+                db=db,
+                group=groups_table.get_group(
+                    db=db,
+                    group_id=group_id,
+                )
+            )
+            return "User removed from group and group deleted"
         # ---
-    
+
+        # Return
+        # ---
+        return "User removed from group"
+        # ---
+
     except SQLAlchemyError:
         # Database Error
         # ---
@@ -413,3 +426,67 @@ def remove_all_users(
             detail="Users were not removed",
         )
 # ---
+
+# Update user role
+# ---
+def update_user_role(
+    db: Session,
+    user_group: User_Group,
+    role: user_roles.UserRole,
+) -> User_Group:
+    try:
+        # Update Database
+        # ---
+        user_group.role = role
+        db.commit()
+        db.refresh(user_group)
+        # ---
+
+        # Return
+        # ---
+        return user_group
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User role was not updated"
+        )
+        # ---
+# ---
+
+# Update user group data
+# ---
+def update_user_group_data(
+    db: Session,
+    user_group: User_Group,
+    car_capacity: int,
+    is_passenger: bool,
+) -> User_Group:
+    try:
+        # Update Database
+        # ---
+        user_group.car_capacity = car_capacity
+        user_group.is_passenger = is_passenger
+        db.commit()
+        db.refresh(user_group)
+        # ---
+
+        # Return
+        # ---
+        return user_group
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="User group data was not updated"
+        )
+        # ---

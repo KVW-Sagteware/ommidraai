@@ -1,6 +1,7 @@
 # Base Imports
 # ---
 from fastapi import HTTPException
+from fastapi_pagination.ext.sqlalchemy import paginate
 # ---
 
 # Database Imports
@@ -13,6 +14,12 @@ from sqlalchemy.exc import SQLAlchemyError
 # Import Models
 # ---
 from app.models.group import Group
+from app.models.user_group import User_Group
+# ---
+
+# Import Schemas
+# ---
+from app.schemas import user_roles
 # ---
 
 # Get Group
@@ -64,11 +71,6 @@ def get_group_by_name(
                 Group.name == group_name
             )
         )
-        if group is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Group not found",
-            )
         # ---
 
         # Return
@@ -85,6 +87,41 @@ def get_group_by_name(
         )
         # ---
 # ---
+
+# Get User Groups
+# ---
+def get_user_groups(
+    db: Session,
+    user_id: int,
+    is_owned: bool,
+) -> list[Group]:
+    try:
+        # Get User Groups
+        # ---
+        user_groups = paginate(db,
+            select(User_Group, Group)
+            .join(Group, Group.id == User_Group.group_id)
+            .where(
+                User_Group.user_id == user_id,
+                User_Group.role == user_roles.UserRole.owner if is_owned else User_Group.role != user_roles.UserRole.owner,
+            )
+            .order_by(User_Group.group_id.desc())
+        )
+        # ---
+
+        # Return
+        # ---
+        return user_groups
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=400,
+            detail="User groups were not retrieved",
+        )
+        # ---
 
 # Group ID
 # ---

@@ -184,7 +184,7 @@ def update_member_role(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.update_user_role(
+    return groups_service.update_user_role(
         db=db,
         current_user=current_user,
         group_name=group_name,
@@ -203,7 +203,7 @@ def update_user_properties(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.update_user_group_data(
+    return groups_service.update_user_group_data(
         db=db,
         current_user=current_user,
         group_id=group_id,
@@ -221,7 +221,7 @@ def remove_location(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.remove_group_location(
+    return groups_service.remove_group_location(
         db=db,
         current_user=current_user,
         location_name=location_name,
@@ -253,7 +253,7 @@ def kick_user_from_group(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return group_service.remove_group_user(
+    return groups_service.remove_group_user(
         db=db,
         current_user=current_user,
         group_id=group_id,

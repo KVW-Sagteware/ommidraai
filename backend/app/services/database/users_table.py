@@ -19,6 +19,8 @@ from app.security import hash_password
 # Import Models
 # ---
 from app.models.user import User
+from app.models.user_group import User_Group
+from app.models.location import Location
 # ---
 
 # Import Schemas
@@ -59,6 +61,38 @@ def get_user(
         raise HTTPException(
             status_code=500,
             detail="Could not retrieve user",
+        )
+        # ---
+# ---
+
+# Get User Data for Groups
+# ---
+def get_user_data(
+    db: Session,
+    group_id: int,
+):
+    try:
+        # Get Data
+        # ---
+        users_data = db.execute(
+            select(User, User_Group, Location)
+            .join(User_Group, User.id == User_Group.user_id)
+            .join(Location, Location.id == User.default_location_id)
+            .where(User_Group.group_id == group_id)
+        ).all()
+        # ---
+
+        # Return
+        # ---
+        return users_data
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=500,
+            detail="Could not retrieve user data",
         )
         # ---
 # ---
