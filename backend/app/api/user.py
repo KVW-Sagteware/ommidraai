@@ -13,7 +13,6 @@ from pydantic import BaseModel
 # ---
 from app.database import get_db
 from app.security import get_current_user
-from app.services import user_service
 # ---
 
 # Import Models
@@ -25,6 +24,11 @@ from app.models.user import User
 # ---
 from app.schemas.user_location import UserLocationCreate, UserLocationResponse
 from app.schemas.location import LocationCreate
+# ---
+
+# Import Services
+# ---
+from app.services.api import user_service
 # ---
 
 # Router Setup
@@ -44,7 +48,7 @@ def get_current_user_locations(
 ):
     return user_service.get_current_user_locations(
         db=db,
-        current_user=current_user,
+        user_id=current_user.id,
     )
 # ---
 
@@ -55,9 +59,9 @@ def get_current_user_default_location(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return user_service.get_default_user_location(
+    return user_service.get_current_user_default_location(
         db=db,
-        default_location_id=current_user.default_location_id,
+        current_user=current_user,
     )
 # ---
 
@@ -75,7 +79,7 @@ def add_user_location(
     return user_service.add_user_location(
         db=db,
         current_user=current_user,
-        user_location=user_location,
+        user_location_create=user_location,
     )
 # ---
 
@@ -90,10 +94,10 @@ def update_user_default_location(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return user_service.update_user_default_location(
+    return user_service.edit_default_user_location(
         db=db,
         current_user=current_user,
-        name=payload.name,
+        location_name=payload.name,
     )
 # ---
 
