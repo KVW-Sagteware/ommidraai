@@ -61,6 +61,30 @@ def get_user(
             detail="Could not retrieve user",
         )
         # ---
+
+def get_user_by_name(
+    db: Session,
+    username: str,
+) -> User:
+    try:
+        # Get User
+        # ---
+        return db.scalar(
+            select(User)
+            .where(
+                User.username == username,
+            )
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=500,
+            detail="Could not get User",
+        )
+        # ---
 # ---
 
 # Get User ID
