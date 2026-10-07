@@ -40,7 +40,7 @@ Before installing the application, make sure you have:
 
 Download and install Git for Windows from the official website:
 
-[Git for Windows](https://git-scm.com/download/win?utm_source=chatgpt.com)
+[Git for Windows](https://git-scm.com/download/win)
 
 The default installation options are suitable for this project.
 
@@ -54,7 +54,7 @@ git --version
 
 Download and install Docker Desktop:
 
-[Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/?utm_source=chatgpt.com)
+[Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
 
 During installation, use the **WSL 2** backend when prompted.
 
@@ -72,8 +72,8 @@ docker compose version
 Open **PowerShell** and clone the repository:
 
 ```powershell
-git clone https://github.com/USERNAME/PROJECT.git
-cd PROJECT
+git clone https://github.com/BroerSakki/ommidraai.git
+cd ommidraai
 ```
 
 ### 4. Configure map data downloads in osrm/maps.txt

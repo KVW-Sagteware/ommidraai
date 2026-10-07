@@ -10,26 +10,31 @@ echo "---"
 sudo apt update
 sudo apt upgrade -y
 echo "---"
+echo
 
 echo "Installing prerequisites..."
 echo "---"
 sudo apt install -y git curl
 echo "---"
+echo
 
 echo "Installing Docker..."
 echo "---"
 curl -fsSL https://get.docker.com | sudo sh
 echo "---"
+echo
 
 echo "Enabling Docker..."
 echo "---"
 sudo systemctl enable --now docker
 echo "---"
+echo
 
 echo "Adding $USER to the docker group..."
 echo "---"
 sudo usermod -aG docker "$USER"
 echo "---"
+echo
 
 echo "=="
 echo
