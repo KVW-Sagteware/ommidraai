@@ -13,7 +13,6 @@ import os
 # Import Local Libraries
 # ---
 from app.database import get_db
-from app.services import auth_service
 from app.models.user import User
 # ---
 
