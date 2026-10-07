@@ -64,6 +64,21 @@ def get_user_sent_invites(
     )
 # ---
 
+# Get Group Invite Codes
+# ---
+@router.get("/code/{group_id}")
+def get_invite_codes_to_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return invite_service.get_invite_codes(
+        db=db,
+        current_user=current_user,
+        group_id=group_id,
+    )
+# ---
+
 # Accept Invite
 # ---
 @router.post("/accept")

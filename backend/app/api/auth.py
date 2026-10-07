@@ -8,7 +8,6 @@ from typing import Optional
 # Import Local Libraries
 # ---
 from app.models.user import User
-from app.services import auth_service
 from app.database import engine, get_db
 from app.security import get_current_user, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME, USERNAME_COOKIE_NAME
 # ---
@@ -18,6 +17,11 @@ from app.security import get_current_user, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NA
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.schemas.auth import LoginRequest, Token, RefreshRequest
 from app.schemas.location import LocationCreate
+# ---
+
+# Import Services
+# ---
+from app.services.api import auth_service
 # ---
 
 # Router Setup
