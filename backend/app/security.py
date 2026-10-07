@@ -4,10 +4,10 @@ from datetime import datetime, timedelta, UTC
 from pwdlib import PasswordHash
 from fastapi import Depends, HTTPException, Request, Cookie, Header
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 import os
-
 # ---
 
 # Import Local Libraries
@@ -153,9 +153,11 @@ def get_current_user(
 
     user_id = verify_access_token(token)
 
-    user = auth_service.get_user_by_id(
-        db=db,
-        user_id=user_id,
+    user = db.scalar(
+        select(User)
+        .where(
+            User.id == user_id
+        )
     )
 
     if user is None:

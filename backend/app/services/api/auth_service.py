@@ -27,6 +27,7 @@ from app.security import (
 from app.schemas.location import LocationCreate
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user_location import UserLocationCreate
 # ---
 
 # Import Models
@@ -79,7 +80,10 @@ def register(
         user_location: User_Location = user_locations_table.create_user_location(
             db=db,
             user=new_user,
-            user_location_create=location,
+            user_location_create=UserLocationCreate(
+                name="Default",
+                location=location,
+            ),
         )
         # ---
 
@@ -107,7 +111,7 @@ def login(
 ) -> str:
     # Get User
     # ---
-    stmt: User = users_table.get_user_by_name(
+    user: User = users_table.get_user_by_name(
         db=db,
         username=credentials.username,
     )
