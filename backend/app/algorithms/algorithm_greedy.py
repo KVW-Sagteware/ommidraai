@@ -1,15 +1,22 @@
 from app.algorithms.osrm_functions import query_osrm_table, query_osrm_route
 from app.algorithms.RedBlackTree import RedBlackTree
 
+# Local cache for group rankings to avoid recomputation
+# ---
 group_ranking_cache = {}
+# ---
 
+# Build a Red-Black Tree from a ranking list
+# ---
 def _build_ranking_tree(ranking):
     tree = RedBlackTree()
     for item in ranking:
         tree.insert((item["bottleneck"], item["destination"]), item)
     return tree
+# ---
 
-
+# Build a distance matrix from the given data
+# ---
 def _build_distance_matrix(starts_data, passengers_data, destinations_data, osrm_host="osrm:5000"):
     start_nodes = [("start", name) for name in starts_data]
     passengers = [("passenger", name) for name in passengers_data]
@@ -36,8 +43,10 @@ def _build_distance_matrix(starts_data, passengers_data, destinations_data, osrm
                 distance_matrix[src_key][dest_key] = raw_matrix[s_i][d_i]
 
     return distance_matrix, key_to_coord
+# ---
 
-
+# Evaluate a single destination using the precomputed distance matrix
+# ---
 def _evaluate_destination_with_matrix(d, starts_data, starting_capacities, passengers_data, distance_matrix, key_to_coord, osrm_host="osrm:5000"):
     start_names = list(starts_data.keys())
     passenger_names = list(passengers_data.keys())
@@ -106,8 +115,10 @@ def _evaluate_destination_with_matrix(d, starts_data, starting_capacities, passe
         "bottleneck": destination_bottleneck,
         "routes": routes_with_geometry
     }
+# ---
 
-
+# Evaluate all destinations using the precomputed distance matrix and OSRM
+# ---
 def evaluate_destinations_with_osrm(starts_data, starting_capacities, passengers_data, destinations_data, osrm_host="osrm:5000", group_id=None):
     start_nodes = list(starts_data.keys())
     destinations = list(destinations_data.keys())
@@ -128,8 +139,10 @@ def evaluate_destinations_with_osrm(starts_data, starting_capacities, passengers
         group_ranking_cache[group_id] = _build_ranking_tree(ranking)
 
     return ranking
+# ---
 
-
+# Get a cached ranking for a given group
+# ---
 def get_cached_ranking(group_id, starts_data=None, starting_capacities=None, passengers_data=None, destinations_data=None, osrm_host="osrm:5000"):
     if group_id in group_ranking_cache:
         return group_ranking_cache[group_id].inorder_traversal()
@@ -146,8 +159,10 @@ def get_cached_ranking(group_id, starts_data=None, starting_capacities=None, pas
         group_id=group_id,
     )
     return group_ranking_cache[group_id].inorder_traversal() if group_id in group_ranking_cache else ranking
+# ---
 
-
+# Add a single destination to the cached ranking for a given group
+# ---
 def add_single_destination_to_cache(group_id, new_dest, starts_data, starting_capacities, passengers_data, destinations_data, osrm_host="osrm:5000"):
     if group_id not in group_ranking_cache:
         return evaluate_destinations_with_osrm(
@@ -176,8 +191,10 @@ def add_single_destination_to_cache(group_id, new_dest, starts_data, starting_ca
 
     group_ranking_cache[group_id].insert((new_destination_result["bottleneck"], new_destination_result["destination"]), new_destination_result)
     return group_ranking_cache[group_id].inorder_traversal()
+# ---
 
-
+# Remove a destination from the cached ranking for a given group
+# ---
 def remove_destination_from_cache(group_id, dest_id):
     if group_id not in group_ranking_cache:
         return []
@@ -185,8 +202,10 @@ def remove_destination_from_cache(group_id, dest_id):
     tree = group_ranking_cache[group_id]
     tree.delete_by_destination(dest_id)
     return tree.inorder_traversal()
+# ---
 
-
+# Load the ranking for a group on the page
+# ---
 def group_page_load_ranking(group_id, starts_data, starting_capacities, passengers_data, destinations_data, osrm_host="osrm:5000"):
     cached_ranking = get_cached_ranking(group_id)
     if cached_ranking:
@@ -205,8 +224,10 @@ def group_page_load_ranking(group_id, starts_data, starting_capacities, passenge
     print(f"\033[1m Computed new ranking for group {group_id} \033[0m")
     group_ranking_cache[group_id].print_tree()
     return group_ranking_cache[group_id].inorder_traversal() if group_id in group_ranking_cache else ranking
+# ---
 
-
+# Add a destination to a group and update the cached ranking
+# ---
 def add_destination_to_group(group_id, new_dest, starts_data, starting_capacities, passengers_data, destinations_data, osrm_host="osrm:5000"):
     ranking = add_single_destination_to_cache(
         group_id=group_id,
@@ -220,16 +241,20 @@ def add_destination_to_group(group_id, new_dest, starts_data, starting_capacitie
     print(f"\033[1m Added destination {new_dest} to group {group_id} ranking \033[0m")
     group_ranking_cache[group_id].print_tree()
     return ranking
+# ---
 
-
+# Remove a destination from a group and update the cached ranking
+# ---
 def delete_destination_from_group(group_id, dest_id):
     ranking = remove_destination_from_cache(group_id, dest_id)
     print(f"\033[1m Removed destination {dest_id} from group {group_id} ranking \033[0m")
     if group_id in group_ranking_cache:
         group_ranking_cache[group_id].print_tree()
     return ranking
+# ---
 
-
+# Refresh the ranking for a group after an input overhaul
+# ---
 def refresh_group_ranking_after_input_overhaul(group_id, starts_data, starting_capacities, passengers_data, destinations_data, osrm_host="osrm:5000"):
     ranking = evaluate_destinations_with_osrm(
         starts_data=starts_data,
@@ -242,3 +267,4 @@ def refresh_group_ranking_after_input_overhaul(group_id, starts_data, starting_c
     print(f"\033[1m Refreshed ranking for group {group_id} after input overhaul \033[0m")
     group_ranking_cache[group_id].print_tree()
     return group_ranking_cache[group_id].inorder_traversal() if group_id in group_ranking_cache else ranking
+# ---
