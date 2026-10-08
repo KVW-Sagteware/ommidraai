@@ -93,7 +93,24 @@ function resolvePathNodes(
   destinations: ApiDestination[]
 ): WorldMapPoint[] {
   return path
-    .map((name) => {
+    .map((name, index) => {
+      const isDestination = index === path.length - 1;
+      const destNode = destinations.find(
+        (destination) => destination.group_location.display_name === name
+      );
+
+      if (isDestination) {
+        if (!destNode) {
+          return null;
+        }
+
+        return {
+          label: destNode.group_location.display_name,
+          latitude: destNode.location.latitude,
+          longitude: destNode.location.longitude,
+        };
+      }
+
       const userNode = users.find((user) => user.user.username === name);
 
       if (userNode) {
@@ -103,10 +120,6 @@ function resolvePathNodes(
           longitude: userNode.location.longitude,
         };
       }
-
-      const destNode = destinations.find(
-        (destination) => destination.group_location.display_name === name
-      );
 
       if (destNode) {
         return {

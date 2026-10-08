@@ -1,13 +1,11 @@
 # Base Imports
 # ---
 from fastapi import Depends, HTTPException
-from fastapi_pagination.ext.sqlalchemy import paginate
 from typing import List
 # ---
 
 # Database Imports
 # ---
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 # ---
@@ -94,6 +92,8 @@ def accept_invite(
     group_id: int,
 ) -> str:
     try:
+        from app.services.api import groups_service
+
         # Get Invite
         # ---
         invite:Invite = invites_table.get_invitation_to_group(
@@ -120,6 +120,10 @@ def accept_invite(
         user_groups_table.add_user(
             db=db,
             user_group_create=user_group_create,
+        )
+        groups_service.refresh_group_ranking_cache(
+            db=db,
+            group_id=group_id,
         )
         # ---
 
@@ -307,6 +311,8 @@ def join_with_invite_code(
     code: int,
 ) -> Group:
     try:
+        from app.services.api import groups_service
+
         # Get Invite Code
         # ---
         invite_code = invite_codes_table.get_invite_code(
@@ -325,6 +331,10 @@ def join_with_invite_code(
                 group_id=invite_code.group_id,
                 role=invite_code.role,
             )
+        )
+        groups_service.refresh_group_ranking_cache(
+            db=db,
+            group_id=user_group.group_id,
         )
         # ---
 
@@ -410,6 +420,50 @@ def delete_invite_code(
         raise HTTPException(
             status_code=400,
             detail="Invite code was not deleted"
+        )
+        # ---
+# ---
+
+# Get Invite Codes
+# ---
+def get_invite_codes(
+    db: Session,
+    current_user: User,
+    group_id: int,
+) -> List[Invite_Code]:
+    try:
+        # Check Permissions
+        # ---
+        if not user_roles.can_manage_user(
+            actor=user_groups_table.get_user_group(
+                db=db,
+                user_group_select=user_group_schemas.UserGroupSelect(
+                    group_id=group_id,
+                    user_id=current_user.id,
+                )
+            ).role,
+            target=user_roles.UserRole.member,
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied",
+            )
+        # ---
+
+        # Get Invite Codes
+        # ---
+        return invite_codes_table.get_invite_codes_by_group(
+            db=db,
+            group_id=group_id,
+        )
+        # ---
+
+    except SQLAlchemyError:
+        # Database Error
+        # ---
+        raise HTTPException(
+            status_code=500,
+            detail="Could not retrieve group invite codes",
         )
         # ---
 # ---
