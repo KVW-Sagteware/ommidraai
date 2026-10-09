@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+import { RegisterPageContent } from "@/app/components/auth/register-page-content";
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
@@ -15,6 +16,8 @@ type SearchResult = {
 }
 
 export default function Register() {
+  return <RegisterPageContent />;
+}
     const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
