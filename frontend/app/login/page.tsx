@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+import { LoginPageContent } from "@/app/components/auth/login-page-content";
 import type React from "react"
 import { useState } from "react"
 import Image from "next/image"
@@ -11,6 +12,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { LanguageSwitcher } from "@/app/components/navigation/language-switcher";
 
 export default function Login() {
+  return <LoginPageContent />;
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)

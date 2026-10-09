@@ -210,13 +210,13 @@ function addRoutePath(
     L.polyline(positions, sharedOptions).addTo(layer);
 }
 
-type MapPoint = {
+export type MapPoint = {
     label: string;
     latitude: number;
     longitude: number;
 };
 
-type WorldMapRoute = {
+export type WorldMapRoute = {
     id: string;
     driver: string;
     ranking: number;
