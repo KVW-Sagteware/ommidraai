@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { JoinedGroups } from "./joined-group";
 import { JoinGroupForm } from "./join-group-form";
 import { Spinner } from "@/app/components/ui/spinner";
-import type { GroupItem } from "@/app/lib/types";
+import type { GroupItem } from "./group-card";
 
 interface JoinedGroupsSectionProps {
   groups: GroupItem[];
