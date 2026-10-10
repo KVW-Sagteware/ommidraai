@@ -58,6 +58,7 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [autoUpdateChat, setAutoUpdateChat] = useState(true);
 
   const endRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
@@ -92,11 +93,20 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
 
     loadInitial();
 
+    let interval: NodeJS.Timeout | undefined;
+    if (autoUpdateChat) {
+      interval = setInterval(() => {
+        pollNewMessages();
+      }, POLL_INTERVAL_MS);
+    }
+
     return () => {
       cancelled = true;
+      if (interval) {
+        clearInterval(interval);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
+  }, [groupId, autoUpdateChat]);
 
   async function pollNewMessages() {
     const existing = messagesRef.current;
@@ -153,16 +163,26 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
 
   return (
     <section className="flex h-full flex-col border border-gray-200 bg-gray-50 p-6">
+      <button
+        type="button"
+        onClick={() => setAutoUpdateChat(!autoUpdateChat)}
+        className={`mb-4 self-start rounded-lg px-4 py-2 text-sm font-semibold shadow transition ${autoUpdateChat ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
+      >
+        {autoUpdateChat ? t("disableAutoUpdate") : t("enableAutoUpdate")}
+      </button>
+
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
 
-        <button
-          type="button"
-          onClick={pollNewMessages}
-          className="rounded-lg bg-[#3d3461] px-5 py-2.5 font-bold text-white transition hover:bg-[#30294d] w-fit"
-        >
-          {t("refreshChat")}
-        </button>
+        {!autoUpdateChat && (
+          <button
+            type="button"
+            onClick={pollNewMessages}
+            className="rounded-lg bg-[#3d3461] px-5 py-2.5 font-bold text-white transition hover:bg-[#30294d] w-fit"
+          >
+            {t("refreshChat")}
+          </button>
+        )}
       </div>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col-reverse overflow-y-auto rounded-xl border border-gray-200 bg-white p-4">

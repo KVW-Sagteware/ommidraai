@@ -210,6 +210,8 @@
     "deleteLocation": "Delete location",
     "deleteLocationTitle": "Delete location?",
     "deleteLocationDescription": "Are you sure you want to remove \"{location}\" from this group?",
+    "disableAutoUpdate": "Disable Auto-Update",
+    "enableAutoUpdate": "Enable Auto-Update",
     "chatTitle": "Group Chat",
     "refreshChat": "⟳",
     "chatLoading": "Loading chat…",

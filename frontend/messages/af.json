@@ -210,6 +210,8 @@
     "deleteLocation": "Verwyder plek",
     "deleteLocationTitle": "Verwyder plek?",
     "deleteLocationDescription": "Is jy seker jy wil \"{location}\" van hierdie groep verwyder?",
+    "disableAutoUpdate": "Deaktiveer Outomatiese Opdatering",
+    "enableAutoUpdate": "Aktiveer Outomatiese Opdatering",
     "chatTitle": "Groepklets",
     "refreshChat": "⟳",
     "chatLoading": "Laai klets…",
