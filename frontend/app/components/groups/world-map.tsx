@@ -526,7 +526,7 @@ export function WorldMap({
     return (
         <div className="relative flex h-[350px] w-full flex-col overflow-hidden border border-gray-300">
             {(routes.length > 0 || isAdmin) && (
-                <div className="relative z-[500] flex items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 overflow-auto">
+                <div className="relative z-[500] flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
                     {routes.length > 0 && (
                         <>
                             <label
@@ -560,29 +560,6 @@ export function WorldMap({
                                     : "—"}
                             </span>
                         </>
-                    )}
-
-                    {routes.length > 0 && (
-                        <div className="ml-auto flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
-                            {(["antpath", "polyline"] as const).map((mode) => {
-                                const isActive = routeDisplayMode === mode;
-
-                                return (
-                                    <button
-                                        key={mode}
-                                        type="button"
-                                        onClick={() => setRouteDisplayMode(mode)}
-                                        className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
-                                            isActive
-                                                ? "bg-[#3d3461] text-white"
-                                                : "text-gray-600 hover:bg-white"
-                                        }`}
-                                    >
-                                        {mode === "antpath" ? t("worldMapAntPath") : t("worldMapPolyline")}
-                                    </button>
-                                );
-                            })}
-                        </div>
                     )}
 
                     {isAdmin && (
