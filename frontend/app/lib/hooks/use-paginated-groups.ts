@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import type { GroupItem } from "@/app/lib/types";
+import type { GroupItem } from "@/app/components/homepage/group-card";
 
 interface UsePaginatedGroupsOptions {
   endpoint: "owned" | "joined";

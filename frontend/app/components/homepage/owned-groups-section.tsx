@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { MyGroups } from "./my-group";
 import { Spinner } from "@/app/components/ui/spinner";
-import type { GroupItem } from "@/app/lib/types";
+import type { GroupItem } from "./group-card";
 
 interface OwnedGroupsSectionProps {
   groups: GroupItem[];
