@@ -92,6 +92,8 @@ def accept_invite(
     group_id: int,
 ) -> str:
     try:
+        from app.services.api import groups_service
+
         # Get Invite
         # ---
         invite:Invite = invites_table.get_invitation_to_group(
@@ -118,6 +120,10 @@ def accept_invite(
         user_groups_table.add_user(
             db=db,
             user_group_create=user_group_create,
+        )
+        groups_service.refresh_group_ranking_cache(
+            db=db,
+            group_id=group_id,
         )
         # ---
 
@@ -305,6 +311,8 @@ def join_with_invite_code(
     code: int,
 ) -> Group:
     try:
+        from app.services.api import groups_service
+
         # Get Invite Code
         # ---
         invite_code = invite_codes_table.get_invite_code(
@@ -323,6 +331,10 @@ def join_with_invite_code(
                 group_id=invite_code.group_id,
                 role=invite_code.role,
             )
+        )
+        groups_service.refresh_group_ranking_cache(
+            db=db,
+            group_id=user_group.group_id,
         )
         # ---
 

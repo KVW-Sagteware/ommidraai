@@ -7,11 +7,13 @@ import logo from "@/app/components/Image/ommidraai-mark.png"
 import Link from "next/link"
 import { useRouter } from 'next/navigation';
 import { useTranslations } from "next-intl";
+import { Eye, EyeOff } from "lucide-react";
 import { LanguageSwitcher } from "@/app/components/navigation/language-switcher";
 
 export default function Login() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter();
@@ -85,19 +87,31 @@ export default function Login() {
             />
           </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-brand-dark">{t("password")}</span>
-            <input
-              type="password"
-              name="password"
-              placeholder={t("passwordPlaceholder")}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-              className="w-full rounded-3xl border border-brand-mid bg-brand-light/90 px-4 py-3 text-base text-brand-dark outline-none transition placeholder:text-brand-dark/50 focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/20"
-            />
-          </label>
+          <div>
+            <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-brand-dark">{t("password")}</label>
+            <div className="relative">
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder={t("passwordPlaceholder")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="w-full rounded-3xl border border-brand-mid bg-brand-light/90 px-4 py-3 pr-12 text-base text-brand-dark outline-none transition placeholder:text-brand-dark/50 focus:border-brand-dark focus:ring-2 focus:ring-brand-dark/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                aria-controls="login-password"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-brand-dark/70 transition hover:text-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-dark/40"
+              >
+                {showPassword ? <EyeOff aria-hidden="true" size={20} /> : <Eye aria-hidden="true" size={20} />}
+              </button>
+            </div>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <button

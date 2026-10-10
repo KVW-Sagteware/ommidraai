@@ -25,6 +25,7 @@ from app.schemas.user_location import UserLocationCreate, UserLocationResponse
 # ---
 from app.services.database import users_table
 from app.services.database import user_locations_table
+from app.services.database import user_groups_table
 # ---
 
 # Get User Locations
@@ -112,6 +113,8 @@ def edit_default_user_location(
     location_name: str,
 ) -> User:
     try:
+        from app.services.api import groups_service
+
         # Get User Location
         # ---
         user_location:User_Location = user_locations_table.get_user_location_by_name(
@@ -126,6 +129,15 @@ def edit_default_user_location(
         current_user.default_location_id = user_location.location_id
         db.commit()
         db.refresh(current_user)
+
+        for user_group in user_groups_table.get_user_groups(
+            db=db,
+            user_id=current_user.id,
+        ):
+            groups_service.refresh_group_ranking_cache(
+                db=db,
+                group_id=user_group.group_id,
+            )
         # ---
 
         # Return

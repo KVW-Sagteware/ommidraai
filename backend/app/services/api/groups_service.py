@@ -18,13 +18,14 @@ from app.models.group import Group
 from app.models.user_group import User_Group
 from app.models.location import Location
 from app.models.group_location import Group_Location
-from app.schemas.location import LocationCreate
+from app.algorithms.algorithm_greedy import add_destination_to_group, delete_destination_from_group, refresh_group_ranking_after_input_overhaul
 # ---
 
 # Import Schemas
 # ---
 from app.schemas import user_roles
 from app.schemas import user_group as user_group_schemas
+from app.schemas.location import LocationCreate
 # ---
 
 # Import Services
@@ -32,6 +33,66 @@ from app.schemas import user_group as user_group_schemas
 from app.services.database import groups_table
 from app.services.database import user_groups_table
 from app.services.database import group_locations_table, users_table, locations_table
+# ---
+
+# Helper Functions
+# ---
+def _build_group_routing_inputs(
+    db: Session,
+    group_id: int,
+    include_extra_data: bool = False,
+):
+    users_data = users_table.get_user_data(
+        db=db,
+        group_id=group_id,
+    )
+
+    coords = group_locations_table.get_location_data(
+        db=db,
+        group_id=group_id,
+    )
+
+    starts_data = {}
+    starts_capacities = {}
+    passengers_data = {}
+    destinations_data = {}
+    passenger_count = 0
+
+    for user, user_group, location in users_data:
+        if user_group.is_passenger:
+            passengers_data[user.username] = (location.latitude, location.longitude)
+            passenger_count += 1
+        else:
+            starts_data[user.username] = (location.latitude, location.longitude)
+            starts_capacities[user.username] = user_group.car_capacity
+            passenger_count -= user_group.car_capacity
+
+    for group_location, location in coords:
+        destinations_data[group_location.display_name] = (location.latitude, location.longitude)
+
+    if include_extra_data:
+        return users_data, coords, starts_data, starts_capacities, passengers_data, destinations_data, passenger_count
+    return starts_data, starts_capacities, passengers_data, destinations_data, passenger_count
+
+def refresh_group_ranking_cache(
+    db: Session,
+    group_id: int,
+):
+    starts_data, starts_capacities, passengers_data, destinations_data, passenger_count = _build_group_routing_inputs(
+        db=db,
+        group_id=group_id,
+    )
+
+    if not starts_data or not destinations_data or passenger_count > 0:
+        destinations_data = {}
+
+    return refresh_group_ranking_after_input_overhaul(
+        group_id=group_id,
+        starts_data=starts_data,
+        starting_capacities=starts_capacities,
+        passengers_data=passengers_data,
+        destinations_data=destinations_data,
+    )
 # ---
 
 # Get User Groups
@@ -128,7 +189,10 @@ def _get_algorithm_function(algorithm_name: str):
         spec = ALGORITHMS["greedy"]
 
     module = importlib.import_module(spec["module"])
-    return algorithm_key, module.evaluate_destinations_with_osrm
+    if algorithm_key == "greedy":
+        return algorithm_key, module.group_page_load_ranking
+    else:
+        return algorithm_key, module.evaluate_destinations_with_osrm
 
 def get_group_data(
     db: Session,
@@ -157,36 +221,12 @@ def get_group_data(
 
         # Calculate group data
         # ---
-        users_data = users_table.get_user_data(
+        users_data, coords, starts_data, starts_capacities, passengers_data, destinations_data, passenger_count = _build_group_routing_inputs(
             db=db,
             group_id=group_id,
+            include_extra_data=True,
         )
 
-        coords = group_locations_table.get_location_data(
-            db=db,
-            group_id=group_id,
-        )
-
-        usernames = []
-        starts_data = {}
-        starts_capacities = {}
-        passengers_data = {}
-        destinations_data = {}
-        passenger_count = 0
-    
-        for user, user_group, location in users_data:
-            usernames.append(user.username)
-            if user_group.is_passenger:
-                passengers_data[user.username] = (location.latitude, location.longitude)
-                passenger_count += 1
-            else:
-                starts_data[user.username] = (location.latitude, location.longitude)
-                starts_capacities[user.username] = user_group.car_capacity
-                passenger_count -= user_group.car_capacity
-    
-        for group_location, location in coords:
-            destinations_data[group_location.display_name] = (location.latitude, location.longitude)
-    
         routing_data = []
         selected_algorithm = algorithm_name.lower() if algorithm_name else "greedy"
         if selected_algorithm not in ALGORITHMS:
@@ -196,6 +236,7 @@ def get_group_data(
             try:
                 _, evaluate_destinations = _get_algorithm_function(selected_algorithm)
                 routing_data = evaluate_destinations(
+                    group_id=group_id,
                     starts_data=starts_data,
                     starting_capacities=starts_capacities,
                     passengers_data=passengers_data,
@@ -438,12 +479,41 @@ def add_group_location(
 
     # Add Location to Group
     # ---
-    return group_locations_table.add_group_location(
+    group_location = group_locations_table.add_group_location(
         db=db,
         location_id=location_id,
         group_id=group_id,
         display_name=display_name,
     )
+    # ---
+
+    # Update Red-Black Tree Cache
+    # ---
+    starts_data, starts_capacities, passengers_data, destinations_data, passenger_count = _build_group_routing_inputs(
+        db=db,
+        group_id=group_id,
+    )
+
+    if not starts_data or not destinations_data or passenger_count > 0:
+        refresh_group_ranking_cache(db=db, group_id=group_id)
+        raise HTTPException(
+            status_code=400,
+            detail="Input data for routing not valid",
+        )
+
+    add_destination_to_group(
+        group_id=group_id,
+        new_dest=display_name,
+        starts_data=starts_data,
+        starting_capacities=starts_capacities,
+        passengers_data=passengers_data,
+        destinations_data=destinations_data,
+    )
+    # ---
+
+    # Return
+    # ---
+    return group_location
     # ---
 # ---
 
@@ -657,12 +727,22 @@ def update_user_group_data(
 
         # Update User Group Data
         # ---
-        return user_groups_table.update_user_group_data(
+        user_groups = user_groups_table.update_user_group_data(
             db=db,
             user_group=user_group,
             is_passenger=is_passenger,
             car_capacity=car_capacity,
         )
+        # ---
+
+        # Update Red-Black Tree Cache
+        # ---
+        refresh_group_ranking_cache(db=db, group_id=group_id)
+        # ---
+
+        # Return
+        # ---
+        return user_groups
         # ---
 
     except SQLAlchemyError:
@@ -714,10 +794,20 @@ def leave_user_group_by_id(
 
         # Remove User from Group
         # ---
-        return user_groups_table.remove_user(
+        user_groups = user_groups_table.remove_user(
             db=db,
             user_group=user_group,
         )
+        # ---
+
+        # Update Red-Black Tree Cache
+        # ---
+        refresh_group_ranking_cache(db=db, group_id=group_id)
+        # ---
+
+        # Return
+        # ---
+        return user_groups
         # ---
 
     except SQLAlchemyError:
@@ -781,11 +871,24 @@ def remove_group_location(
 
         # Remove Location from Group
         # ---
-        return group_locations_table.remove_group_location(
+        group_location = group_locations_table.remove_group_location(
             db=db,
             group_id=group_id,
             display_name=location_name,
         )
+        # ---
+
+        # Update Red-Black Tree Cache
+        # ---
+        delete_destination_from_group(
+            group_id=group_id,
+            dest_id=location_name,
+        )
+        # ---
+
+        # Return
+        # ---
+        return group_location
         # ---
 
     except SQLAlchemyError:
@@ -878,10 +981,20 @@ def remove_group_user(
 
         # Remove User from Group
         # ---
-        return user_groups_table.remove_user(
+        user_groups = user_groups_table.remove_user(
             db=db,
             user_group=user_group,
         )
+
+        # Update Red-Black Tree Cache
+        # ---
+        refresh_group_ranking_cache(db=db, group_id=group_id)
+        # ---
+
+        # Return
+        # ---
+        return user_groups
+        # ---
 
     except SQLAlchemyError:
             # Database Error
