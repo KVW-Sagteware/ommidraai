@@ -527,7 +527,7 @@ export function WorldMap({
         <div>
             <div className="relative flex h-[350px] w-full flex-col overflow-hidden border border-gray-300">
                 {(routes.length > 0 || isAdmin) && (
-                    <div className="relative z-[500] flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
+                    <div className="relative flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
                         {routes.length > 0 && (
                             <>
                                 <label
