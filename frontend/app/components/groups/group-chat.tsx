@@ -90,35 +90,33 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
       }
     }
 
-    async function pollNewMessages() {
-      const existing = messagesRef.current;
-      const lastId = existing.length > 0
-        ? existing[existing.length - 1].id
-        : 0;
-
-      try {
-        const response = await fetch(
-          `/api/backend/groups/${groupId}/chat/messages?after_id=${lastId}`
-        );
-        if (!response.ok) return;
-        const data = (await response.json()) as ChatMessage[];
-        if (data.length > 0) {
-          setMessages((prev) => [...prev, ...data]);
-        }
-      } catch {
-        // Polling failures are silent so the chat keeps working on flaky network.
-      }
-    }
-
     loadInitial();
-    const interval = setInterval(pollNewMessages, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
+
+  async function pollNewMessages() {
+    const existing = messagesRef.current;
+    const lastId = existing.length > 0
+      ? existing[existing.length - 1].id
+      : 0;
+
+    try {
+      const response = await fetch(
+        `/api/backend/groups/${groupId}/chat/messages?after_id=${lastId}`
+      );
+      if (!response.ok) return;
+      const data = (await response.json()) as ChatMessage[];
+      if (data.length > 0) {
+        setMessages((prev) => [...prev, ...data]);
+      }
+    } catch {
+      // Polling failures are silent so the chat keeps working on flaky network.
+    }
+  }
 
   async function sendMessage() {
     const content = draft.trim();
@@ -155,7 +153,17 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
 
   return (
     <section className="flex h-[32rem] flex-col rounded-2xl border border-gray-200 bg-gray-50 p-6">
-      <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
+
+        <button
+          type="button"
+          onClick={pollNewMessages}
+          className="rounded-lg bg-[#3d3461] px-5 py-2.5 font-bold text-white transition hover:bg-[#30294d] w-fit"
+        >
+          {t("refreshChat")}
+        </button>
+      </div>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col-reverse overflow-y-auto rounded-xl border border-gray-200 bg-white p-4">
         <div ref={endRef} className="flex flex-col justify-end gap-3">

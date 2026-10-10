@@ -211,6 +211,7 @@
     "deleteLocationTitle": "Verwyder plek?",
     "deleteLocationDescription": "Is jy seker jy wil \"{location}\" van hierdie groep verwyder?",
     "chatTitle": "Groepklets",
+    "refreshChat": "⟳",
     "chatLoading": "Laai klets…",
     "chatEmpty": "Nog geen boodskappe nie. Sê hallo!",
     "chatPlaceholder": "Tik 'n boodskap…",

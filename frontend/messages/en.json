@@ -211,6 +211,7 @@
     "deleteLocationTitle": "Delete location?",
     "deleteLocationDescription": "Are you sure you want to remove \"{location}\" from this group?",
     "chatTitle": "Group Chat",
+    "refreshChat": "⟳",
     "chatLoading": "Loading chat…",
     "chatEmpty": "No messages yet. Say hello!",
     "chatPlaceholder": "Type a message…",
