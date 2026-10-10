@@ -50,6 +50,11 @@ function formatTime(timestamp: string): string {
   });
 }
 
+export type Locale = "1" | "0";
+
+const STORAGE_KEY = "ommidraai-auto-update-chat";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
 export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const t = useTranslations("group");
 
@@ -62,6 +67,57 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
 
   const endRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
+
+  function readSavedLocale(): boolean | null {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored === "1" || stored === "0") {
+        return stored === "1";
+      }
+    } catch {
+      // localStorage unavailable (blocked / private mode) -> keep going
+    }
+  
+    try {
+      const cookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${STORAGE_KEY}=`));
+      const value = cookie?.split("=")[1];
+      if (value === "1" || value === "0") {
+        return value === "1";
+      }
+    } catch {
+      // cookies unavailable -> ignore
+    }
+  
+    return null;
+  }
+  
+  function persistLocale(locale: boolean) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, locale ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  
+    try {
+      document.cookie = `${STORAGE_KEY}=${locale ? "1" : "0"};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax`;
+    } catch {
+      // ignore cookie errors
+    }
+  }
+
+  useEffect(() => {
+    const saved = readSavedLocale();
+    if (saved !== null) {
+      setAutoUpdateChat(saved);
+    }
+  }, []);
+
+  const changeAutoUpdateChat = (value: boolean) => {
+    setAutoUpdateChat(value);
+    persistLocale(value);
+  }
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -165,7 +221,7 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
     <section className="flex h-full flex-col border border-gray-200 bg-gray-50 p-6">
       <button
         type="button"
-        onClick={() => setAutoUpdateChat(!autoUpdateChat)}
+        onClick={() => changeAutoUpdateChat(!autoUpdateChat)}
         className={`mb-4 self-start rounded-lg px-4 py-2 text-sm font-semibold shadow transition ${autoUpdateChat ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
       >
         {autoUpdateChat ? t("disableAutoUpdate") : t("enableAutoUpdate")}
