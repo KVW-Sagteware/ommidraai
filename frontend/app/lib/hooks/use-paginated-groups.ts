@@ -6,7 +6,7 @@ interface UsePaginatedGroupsOptions {
   pageSize?: number;
 }
 
-export function usePaginatedGroups({ endpoint, pageSize = 6 }: UsePaginatedGroupsOptions) {
+export function usePaginatedGroups({ endpoint, pageSize = 3 }: UsePaginatedGroupsOptions) {
   const [items, setItems] = useState<GroupItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
