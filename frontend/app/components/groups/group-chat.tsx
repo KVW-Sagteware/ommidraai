@@ -220,8 +220,8 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
         <p className="mt-2 text-sm text-red-600">{error}</p>
       )}
 
-      <div className="mt-4 flex items-end gap-2">
-        <div className="flex-1">
+      <div className="mt-4 flex flex-wrap items-end gap-2">
+        <div className="flex w-full flex-wrap">
           <textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
