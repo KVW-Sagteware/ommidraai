@@ -524,145 +524,146 @@ export function WorldMap({
     }, [ready, renderList, decodedByRoute, driverColors, showAllRoutes, routeDisplayMode]);
 
     return (
-        <div className="relative flex h-[350px] w-full flex-col overflow-hidden border border-gray-300">
-            {(routes.length > 0 || isAdmin) && (
-                <div className="relative z-[500] flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
-                    {routes.length > 0 && (
-                        <>
-                            <label
-                                htmlFor="world-map-destination"
-                                className="text-xs font-semibold text-gray-600"
-                            >
-                                {t("worldMapDestination")}
-                            </label>
+        <div>
+            <div className="relative flex h-[350px] w-full flex-col overflow-hidden border border-gray-300">
+                {(routes.length > 0 || isAdmin) && (
+                    <div className="relative z-[500] flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
+                        {routes.length > 0 && (
+                            <>
+                                <label
+                                    htmlFor="world-map-destination"
+                                    className="text-xs font-semibold text-gray-600"
+                                >
+                                    {t("worldMapDestination")}
+                                </label>
 
-                            <select
-                                id="world-map-destination"
-                                value={selectedIndex}
-                                onChange={(event) =>
-                                    setSelectedIndex(Number(event.target.value))
-                                }
-                                className="flex-1 rounded border border-[#c7c7cc] bg-white px-3 py-2 text-sm text-[#3d3461] outline-none focus:border-[#3d3461]"
-                            >
-                                {routes.map((route, index) => (
-                                    <option key={route.id} value={index}>
-                                        {route.ranking}. {route.destination}
-                                    </option>
-                                ))}
-                            </select>
+                                <select
+                                    id="world-map-destination"
+                                    value={selectedIndex}
+                                    onChange={(event) =>
+                                        setSelectedIndex(Number(event.target.value))
+                                    }
+                                    className="flex-1 rounded border border-[#c7c7cc] bg-white px-3 py-2 text-sm text-[#3d3461] outline-none focus:border-[#3d3461]"
+                                >
+                                    {routes.map((route, index) => (
+                                        <option key={route.id} value={index}>
+                                            {route.ranking}. {route.destination}
+                                        </option>
+                                    ))}
+                                </select>
 
-                            <span className="shrink-0 rounded-lg bg-[#3d3461]/10 px-3 py-2 text-sm font-semibold text-[#3d3461]">
-                                {t("worldMapTotalDistance")}:{" "}
-                                {selectedDistance !== null
-                                    ? t("worldMapDistanceValue", {
-                                          distance: selectedDistance,
-                                      })
-                                    : "—"}
-                            </span>
-                        </>
-                    )}
+                                <span className="shrink-0 rounded-lg bg-[#3d3461]/10 px-3 py-2 text-sm font-semibold text-[#3d3461]">
+                                    {t("worldMapTotalDistance")}:{" "}
+                                    {selectedDistance !== null
+                                        ? t("worldMapDistanceValue", {
+                                              distance: selectedDistance,
+                                          })
+                                        : "—"}
+                                </span>
+                            </>
+                        )}
 
-                    {isAdmin && (
-                        <button
-                            type="button"
-                            role="switch"
-                            aria-checked={showAllRoutes}
-                            onClick={() => setShowAllRoutes((value) => !value)}
-                            className="flex shrink-0 items-center gap-2 text-xs font-semibold text-gray-600"
-                        >
-                            <span
-                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                                    showAllRoutes
-                                        ? "bg-[#3d3461]"
-                                        : "bg-gray-300"
-                                }`}
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={showAllRoutes}
+                                onClick={() => setShowAllRoutes((value) => !value)}
+                                className="flex shrink-0 items-center gap-2 text-xs font-semibold text-gray-600"
                             >
                                 <span
-                                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                                         showAllRoutes
-                                            ? "translate-x-[22px]"
-                                            : "translate-x-1"
+                                            ? "bg-[#3d3461]"
+                                            : "bg-gray-300"
                                     }`}
-                                />
-                            </span>
+                                >
+                                    <span
+                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                            showAllRoutes
+                                                ? "translate-x-[22px]"
+                                                : "translate-x-1"
+                                        }`}
+                                    />
+                                </span>
 
-                            {showAllRoutes
-                                ? t("worldMapShowMyRoute")
-                                : t("worldMapShowAllRoutes")}
-                        </button>
-                    )}
-                </div>
-            )}
-
-            <div className="relative z-0 min-h-0 flex-1">
-                {!ready && (
-                    <div className="absolute inset-0 z-10 animate-pulse rounded-2xl bg-gray-200" />
-                )}
-
-                {passengerMessage && (
-                    <div className="absolute inset-x-0 top-0 z-[1000] flex items-center justify-center rounded-t-2xl bg-[#3d3461]/90 px-4 py-2">
-                        <p className="text-center text-[13px] font-medium text-white">
-                            {passengerMessage}
-                        </p>
+                                {showAllRoutes
+                                    ? t("worldMapShowMyRoute")
+                                    : t("worldMapShowAllRoutes")}
+                            </button>
+                        )}
                     </div>
                 )}
 
-                {ready && !hasVisibleRoute && (
-                    <div className="absolute inset-0 z-[1000] flex items-center justify-center rounded-2xl bg-gray-100/80">
-                            <div className="text-center">
-                                <div className="mb-3 text-5xl">🌍</div>
+                <div className="relative z-0 min-h-0 flex-1">
+                    {!ready && (
+                        <div className="absolute inset-0 z-10 animate-pulse`" />
+                    )}
 
-                                <p className="text-sm text-gray-500">
-                                    {t("worldMapNoRoute")}
-                                </p>
-                            </div>
+                    {passengerMessage && (
+                        <div className="absolute inset-x-0 top-0 z-[1000] flex items-center justify-center bg-[#3d3461]/90 px-4 py-2">
+                            <p className="text-center text-[13px] font-medium text-white">
+                                {passengerMessage}
+                            </p>
                         </div>
                     )}
 
-                {showAllRoutes && renderList.length > 0 && (
-                    <div className="absolute left-3 bottom-3 z-[500] max-h-[75%] overflow-y-auto rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            {t("worldMapAllRouteDistances")}
-                        </p>
+                    {ready && !hasVisibleRoute && (
+                        <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-gray-100/80">
+                                <div className="text-center">
+                                    <div className="mb-3 text-5xl">🌍</div>
 
-                        <ul className="mt-2 space-y-2">
-                            {renderList.map((route) => {
-                                const formatted = formatDistance(route.distance);
-                                const color =
-                                    driverColors.get(route.driver) ??
-                                    ROUTE_STYLE.color;
+                                    <p className="text-sm text-gray-500">
+                                        {t("worldMapNoRoute")}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
-                                return (
-                                    <li
-                                        key={route.id}
-                                        className="flex items-center gap-2 text-sm"
-                                    >
-                                        <span
-                                            className="h-3 w-3 shrink-0 rounded-full"
-                                            style={{ backgroundColor: color }}
-                                        />
-                                        <span className="font-medium text-gray-700">
-                                            {route.driver}
-                                        </span>
-                                        <span className="ml-auto pl-3 text-xs font-semibold text-gray-500">
-                                            {formatted !== null
-                                                ? t("worldMapDistanceValue", {
-                                                      distance: formatted,
-                                                  })
-                                                : "—"}
-                                        </span>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                )}
-
-                <div
-                    ref={mapContainerRef}
-                    className="z-0 h-full w-full rounded-2xl"
-                />
+                    <div
+                        ref={mapContainerRef}
+                        className="z-0 h-full w-full"
+                    />
+                </div>
             </div>
+            {showAllRoutes && renderList.length > 0 && (
+                <div className="overflow-y-auto bg-white/95 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        {t("worldMapAllRouteDistances")}
+                    </p>
+
+                    <ul className="mt-2 space-y-2">
+                        {renderList.map((route) => {
+                            const formatted = formatDistance(route.distance);
+                            const color =
+                                driverColors.get(route.driver) ??
+                                ROUTE_STYLE.color;
+
+                            return (
+                                <li
+                                    key={route.id}
+                                    className="flex items-center gap-2 text-sm"
+                                >
+                                    <span
+                                        className="h-3 w-3 shrink-0 rounded-full"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                    <span className="font-medium text-gray-700">
+                                        {route.driver}
+                                    </span>
+                                    <span className="ml-auto pl-3 text-xs font-semibold text-gray-500">
+                                        {formatted !== null
+                                            ? t("worldMapDistanceValue", {
+                                                  distance: formatted,
+                                              })
+                                            : "—"}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 }
