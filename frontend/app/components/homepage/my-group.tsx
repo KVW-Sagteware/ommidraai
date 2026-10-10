@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { GroupCard } from "./group-card";
-import type { GroupItem } from "@/app/lib/types";
+import { GroupCard, GroupItem } from "./group-card";
 
 type MyGroupsProps = {
   groups: GroupItem[];
