@@ -120,10 +120,6 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages]);
-
   async function sendMessage() {
     const content = draft.trim();
     if (!content || content.length > MAX_MESSAGE_LENGTH || sending) return;
