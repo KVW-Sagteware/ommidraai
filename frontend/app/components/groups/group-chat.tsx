@@ -152,7 +152,7 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const draftTooLong = draft.length > MAX_MESSAGE_LENGTH;
 
   return (
-    <section className="flex h-[32rem] flex-col rounded-2xl border border-gray-200 bg-gray-50 p-6">
+    <section className="flex h-full flex-col border border-gray-200 bg-gray-50 p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
 
