@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AddGroupModal } from "@/app/components/homepage/add-group-modal";
+import { PromptModal } from "@/app/components/ui/prompt-modal";
 import { DashboardHeader } from "@/app/components/homepage/dashboard-header";
 import { OwnedGroupsSection } from "@/app/components/homepage/owned-groups-section";
 import { JoinedGroupsSection } from "@/app/components/homepage/joined-groups-section";
 import { usePaginatedGroups } from "@/app/lib/hooks/use-paginated-groups";
-import type { GroupItem } from "./components/homepage/group-card";
+import type { GroupItem } from "@/app/lib/types";
 
 export default function Home() {
   const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false);
@@ -94,10 +94,10 @@ export default function Home() {
         </div>
       </div>
 
-      <AddGroupModal
+      <PromptModal
         isOpen={isAddGroupModalOpen}
         onClose={() => setIsAddGroupModalOpen(false)}
-        onCreate={createGroup}
+        onConfirm={createGroup}
       />
     </main>
   );
