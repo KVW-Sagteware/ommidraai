@@ -12,6 +12,7 @@ import { UpdateUserPropertiesModal } from "@/app/components/groups/update-user-p
 import { WorldMap } from "@/app/components/groups/world-map";
 import { GroupChat } from "@/app/components/groups/group-chat";
 import { TrashIcon } from "lucide-react";
+import RightTab from "@/app/components/ui/right_tab";
 
 type Role = "owner" | "admin" | "member" | "guest";
 
@@ -940,9 +941,9 @@ export default function GroupPage() {
         {/* ====================================== */}
 
         {groupId && (
-          <div className="mt-8">
+          <RightTab>
             <GroupChat groupId={groupId} currentUsername={currentUsername} />
-          </div>
+          </RightTab>
         )}
 
         {/* ====================================== */}

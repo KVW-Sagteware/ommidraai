@@ -50,6 +50,11 @@ function formatTime(timestamp: string): string {
   });
 }
 
+export type Locale = "1" | "0";
+
+const STORAGE_KEY = "ommidraai-auto-update-chat";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
 export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const t = useTranslations("group");
 
@@ -58,9 +63,61 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [autoUpdateChat, setAutoUpdateChat] = useState(true);
 
   const endRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
+
+  function readSavedLocale(): boolean | null {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored === "1" || stored === "0") {
+        return stored === "1";
+      }
+    } catch {
+      // localStorage unavailable (blocked / private mode) -> keep going
+    }
+  
+    try {
+      const cookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${STORAGE_KEY}=`));
+      const value = cookie?.split("=")[1];
+      if (value === "1" || value === "0") {
+        return value === "1";
+      }
+    } catch {
+      // cookies unavailable -> ignore
+    }
+  
+    return null;
+  }
+  
+  function persistLocale(locale: boolean) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, locale ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  
+    try {
+      document.cookie = `${STORAGE_KEY}=${locale ? "1" : "0"};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax`;
+    } catch {
+      // ignore cookie errors
+    }
+  }
+
+  useEffect(() => {
+    const saved = readSavedLocale();
+    if (saved !== null) {
+      setAutoUpdateChat(saved);
+    }
+  }, []);
+
+  const changeAutoUpdateChat = (value: boolean) => {
+    setAutoUpdateChat(value);
+    persistLocale(value);
+  }
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -90,39 +147,42 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
       }
     }
 
-    async function pollNewMessages() {
-      const existing = messagesRef.current;
-      const lastId = existing.length > 0
-        ? existing[existing.length - 1].id
-        : 0;
-
-      try {
-        const response = await fetch(
-          `/api/backend/groups/${groupId}/chat/messages?after_id=${lastId}`
-        );
-        if (!response.ok) return;
-        const data = (await response.json()) as ChatMessage[];
-        if (data.length > 0) {
-          setMessages((prev) => [...prev, ...data]);
-        }
-      } catch {
-        // Polling failures are silent so the chat keeps working on flaky network.
-      }
-    }
-
     loadInitial();
-    const interval = setInterval(pollNewMessages, POLL_INTERVAL_MS);
+
+    let interval: NodeJS.Timeout | undefined;
+    if (autoUpdateChat) {
+      interval = setInterval(() => {
+        pollNewMessages();
+      }, POLL_INTERVAL_MS);
+    }
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (interval) {
+        clearInterval(interval);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
+  }, [groupId, autoUpdateChat]);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages]);
+  async function pollNewMessages() {
+    const existing = messagesRef.current;
+    const lastId = existing.length > 0
+      ? existing[existing.length - 1].id
+      : 0;
+
+    try {
+      const response = await fetch(
+        `/api/backend/groups/${groupId}/chat/messages?after_id=${lastId}`
+      );
+      if (!response.ok) return;
+      const data = (await response.json()) as ChatMessage[];
+      if (data.length > 0) {
+        setMessages((prev) => [...prev, ...data]);
+      }
+    } catch {
+      // Polling failures are silent so the chat keeps working on flaky network.
+    }
+  }
 
   async function sendMessage() {
     const content = draft.trim();
@@ -158,8 +218,28 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
   const draftTooLong = draft.length > MAX_MESSAGE_LENGTH;
 
   return (
-    <section className="flex h-[32rem] flex-col rounded-2xl border border-gray-200 bg-gray-50 p-6">
-      <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
+    <section className="flex h-full flex-col border border-gray-200 bg-gray-50 p-6">
+      <button
+        type="button"
+        onClick={() => changeAutoUpdateChat(!autoUpdateChat)}
+        className={`mb-4 self-start rounded-lg px-4 py-2 text-sm font-semibold shadow transition ${autoUpdateChat ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
+      >
+        {autoUpdateChat ? t("disableAutoUpdate") : t("enableAutoUpdate")}
+      </button>
+
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">{t("chatTitle")}</h2>
+
+        {!autoUpdateChat && (
+          <button
+            type="button"
+            onClick={pollNewMessages}
+            className="rounded-lg bg-[#3d3461] px-5 py-2.5 font-bold text-white transition hover:bg-[#30294d] w-fit"
+          >
+            {t("refreshChat")}
+          </button>
+        )}
+      </div>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col-reverse overflow-y-auto rounded-xl border border-gray-200 bg-white p-4">
         <div ref={endRef} className="flex flex-col justify-end gap-3">
@@ -216,8 +296,8 @@ export function GroupChat({ groupId, currentUsername }: GroupChatProps) {
         <p className="mt-2 text-sm text-red-600">{error}</p>
       )}
 
-      <div className="mt-4 flex items-end gap-2">
-        <div className="flex-1">
+      <div className="mt-4 flex flex-wrap items-end gap-2">
+        <div className="flex w-full flex-wrap">
           <textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
