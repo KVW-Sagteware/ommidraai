@@ -34,15 +34,7 @@ class Pipeline:
 		self.completed_tasks: list[Task] = []
 		self.failed_tasks: list[Task] = []
 	# ---
-
-	# Build Network
-	# ---
-	def _build_flow_network(
-		self,
-	):
-		pass
-	# ---
-
+	
 	# Add Stage
 	# ---
 	def add_stage(

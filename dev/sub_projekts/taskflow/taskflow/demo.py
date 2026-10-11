@@ -13,11 +13,11 @@ from task import Task
 
 def download_handler(task: Task) -> Task:
     """Simulate downloading a file."""
-    time.sleep(0.08)
+    time.sleep(0.16)
 
     task.data = f"Downloaded({task.data})"
 
-    if task.id <= 3:
+    if task.id <= 100:
         print(f"Task {task.id}: Download complete")
 
     return task
@@ -25,11 +25,11 @@ def download_handler(task: Task) -> Task:
 
 def process_handler(task: Task) -> Task:
     """Simulate processing a downloaded file."""
-    time.sleep(0.03)
+    time.sleep(0.06)
 
     task.data = f"Processed({task.data})"
 
-    if task.id <= 3:
+    if task.id <= 100:
         print(f"Task {task.id}: Processing complete")
 
     return task
@@ -37,18 +37,18 @@ def process_handler(task: Task) -> Task:
 
 def save_handler(task: Task) -> Task:
     """Simulate saving the processed file."""
-    time.sleep(0.10)
+    time.sleep(0.20)
 
     task.result = f"Saved({task.data})"
 
-    if task.id <= 3:
+    if task.id <= 100:
         print(f"Task {task.id}: Saving complete")
 
     return task
 
 
 def run_demo(save_workers: int) -> None:
-    task_count = 12
+    task_count = 50
 
     pipeline = Pipeline()
 
@@ -145,10 +145,6 @@ def run_demo(save_workers: int) -> None:
 
             pipeline.stages["download"].submit(task)
 
-        # Wait for tasks to finish at each stage.
-        #
-        # Because this is a linear pipeline, waiting in order ensures
-        # that each stage has finished passing tasks downstream.
         for stage in pipeline.stages.values():
             stage.join()
 
