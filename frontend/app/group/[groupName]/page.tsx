@@ -12,6 +12,7 @@ import { UpdateUserPropertiesModal } from "@/app/components/groups/update-user-p
 import { WorldMap } from "@/app/components/groups/world-map";
 import { GroupChat } from "@/app/components/groups/group-chat";
 import { TrashIcon } from "lucide-react";
+import RightTab from "@/app/components/ui/right_tab";
 
 type Role = "owner" | "admin" | "member" | "guest";
 
@@ -48,17 +49,11 @@ type ApiAlgorithmEntry = {
   routes: Record<string, ApiAlgorithmRoute>;
 };
 
-type ApiAlgorithmOption = {
-  id: string;
-  name: string;
-};
-
 type ApiGroupData = {
   users: ApiUser[];
   destinations: ApiDestination[];
   algorithm: ApiAlgorithmEntry[] | string;
   algorithm_name?: string;
-  available_algorithms?: ApiAlgorithmOption[];
 };
 
 type ApiMeResponse = {
@@ -81,9 +76,6 @@ type WorldMapRouteInput = {
   geometry: string | null;
   points: WorldMapPoint[];
 };
-
-// Default routing algorithm used when the group data endpoint is first loaded.
-const DEFAULT_ALGORITHM = "greedy";
 
 // Resolves every node along an algorithm path (users by username, destinations
 // by display name) into map pins, dropping any node that cannot be found.
@@ -172,12 +164,6 @@ export default function GroupPage() {
   const [showDeleteLocationModal, setShowDeleteLocationModal] = useState(false);
   const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
   const [isDeletingLocation, setIsDeletingLocation] = useState(false);
-  const [selectedAlgorithm, setSelectedAlgorithm] =
-    useState<string>(DEFAULT_ALGORITHM);
-  const [availableAlgorithms, setAvailableAlgorithms] = useState<
-    ApiAlgorithmOption[]
-  >([]);
-  const [isAlgorithmLoading, setIsAlgorithmLoading] = useState(false);
   const [isKicking, setIsKicking] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -186,7 +172,7 @@ export default function GroupPage() {
   // the error — the initial load shows the full-page error state, while
   // user-triggered reloads (algorithm switch, adding a location) alert instead.
   const loadGroupData = useCallback(
-    async (algorithmName: string) => {
+    async () => {
       if (!groupId) return;
 
       const meResponse = await fetch(`/api/backend/auth/me`);
@@ -198,7 +184,7 @@ export default function GroupPage() {
       setCurrentUsername(username);
 
       const groupResponse = await fetch(
-        `/api/backend/groups/${groupId}?algorithm=${algorithmName}`
+        `/api/backend/groups/${groupId}`
       );
       if (!groupResponse.ok) {
         throw new Error(
@@ -224,14 +210,6 @@ export default function GroupPage() {
       );
 
       setLocations(apiLocations);
-
-      if (typeof groupData.algorithm_name === "string") {
-        setSelectedAlgorithm(groupData.algorithm_name);
-      }
-
-      if (Array.isArray(groupData.available_algorithms)) {
-        setAvailableAlgorithms(groupData.available_algorithms);
-      }
     },
     [groupId, currentUserRole]
   );
@@ -248,7 +226,7 @@ export default function GroupPage() {
       setFetchError(null);
 
       try {
-        await loadGroupData(DEFAULT_ALGORITHM);
+        await loadGroupData();
       } catch (err) {
         if (!cancelled) {
           setFetchError(
@@ -446,29 +424,11 @@ export default function GroupPage() {
     (member) => member.role === "owner"
   );
 
-  // Refetch the group data with a different routing algorithm and refresh the
-  // world map. The owner can switch between the algorithms the backend offers.
-  async function handleAlgorithmChange(algorithmName: string) {
-    if (!groupId || algorithmName === selectedAlgorithm) return;
-
-    setIsAlgorithmLoading(true);
-
-    try {
-      await loadGroupData(algorithmName);
-    } catch (err) {
-      alert(
-        err instanceof Error ? err.message : tCommon("somethingWentWrong")
-      );
-    } finally {
-      setIsAlgorithmLoading(false);
-    }
-  }
-
   // Re-fetches the group data after a location was added so the locations
   // section and the map show the new destination.
   async function refreshAfterAddLocation() {
     try {
-      await loadGroupData(selectedAlgorithm);
+      await loadGroupData();
     } catch (err) {
       alert(
         err instanceof Error ? err.message : tCommon("somethingWentWrong")
@@ -500,7 +460,7 @@ export default function GroupPage() {
       }
 
       setShowUserPropertiesModal(false);
-      await loadGroupData(selectedAlgorithm);
+      await loadGroupData();
     } finally {
       setIsUpdatingUserProperties(false);
     }
@@ -814,31 +774,6 @@ export default function GroupPage() {
           {/* ---------------------------------- */}
 
           <section className="overflow-hidden rounded-2xl border border-gray-300">
-            {availableAlgorithms.length > 0 && (
-              <div className="flex items-center justify-end gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
-                <label
-                  htmlFor="algorithm-select"
-                  className="text-sm font-semibold text-gray-600"
-                >
-                  {t("algorithm")}
-                </label>
-
-                <select
-                  id="algorithm-select"
-                  value={selectedAlgorithm}
-                  onChange={(event) => handleAlgorithmChange(event.target.value)}
-                  disabled={isAlgorithmLoading}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm outline-none transition focus:border-[#3d3461] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {availableAlgorithms.map((algo) => (
-                    <option key={algo.id} value={algo.id}>
-                      {algo.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div className="relative">
               <WorldMap
                 routes={routes}
@@ -846,17 +781,6 @@ export default function GroupPage() {
                 passengerDriver={passengerDriver}
                 isAdmin={currentUserRole === "owner" || currentUserRole === "admin"}
               />
-
-              {isAlgorithmLoading && (
-                <div className="absolute inset-0 z-[1001] flex items-center justify-center bg-gray-100/70">
-                  <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 shadow-lg">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-[#3d3461]" />
-                    <span className="text-sm font-semibold text-gray-700">
-                      {t("algorithmLoading")}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           </section>
         </div>
@@ -1017,9 +941,9 @@ export default function GroupPage() {
         {/* ====================================== */}
 
         {groupId && (
-          <div className="mt-8">
+          <RightTab>
             <GroupChat groupId={groupId} currentUsername={currentUsername} />
-          </div>
+          </RightTab>
         )}
 
         {/* ====================================== */}
