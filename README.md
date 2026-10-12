@@ -18,7 +18,18 @@ chmod +x ./scripts/setup-docker.sh
 
 4. Configure map data downloads in osrm/maps.txt (Url's will automatically be downloaded once the application starts)
 
-5. Start the program
+5. Set up the environment variables
+```bash
+cp backend/.env.example backend/.env
+```
+6. Build database
+```bash
+docker compose -f docker-compose.yml -f docker-compose.linux.dev.yml up backend --build -d
+docker compose exec backend alembic upgrade head
+docker compose down
+```
+
+7. Start the program
 ```bash
 docker compose up -d --build
 ```
@@ -80,7 +91,20 @@ cd ommidraai
 
 In osrm/maps.txt add desired map downloads url's from geofabrik (Url's will automatically be downloaded once the application starts)
 
-### 5. Start the application
+### 5. Set up environment variables
+From project directory, run:
+
+```powershell
+cp backend/.env.example backend/.env
+```
+### 6. Build Database
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.linux.dev.yml up backend --build -d
+docker compose exec backend alembic upgrade head
+docker
+```
+
+### 7. Start the application
 
 From the project directory, run:
 
@@ -90,7 +114,7 @@ docker compose up -d --build
 
 Docker will download the required images, build the application containers, and start the services.
 
-### 5. Access the application
+### 8. Access the application
 
 Once the containers have started, open the application in your web browser:
 

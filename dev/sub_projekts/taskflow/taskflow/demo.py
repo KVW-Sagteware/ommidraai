@@ -47,14 +47,14 @@ def save_handler(task: Task) -> Task:
     return task
 
 
-def run_demo(save_workers: int) -> None:
+def run_demo(download_workers: int, process_workers: int, save_workers: int) -> None:
     task_count = 50
 
     pipeline = Pipeline()
 
     # Create the stages.
-    pipeline.add_stage("download", 2, download_handler)
-    pipeline.add_stage("process", 4, process_handler)
+    pipeline.add_stage("download", download_workers, download_handler)
+    pipeline.add_stage("process", process_workers, process_handler)
     pipeline.add_stage("save", save_workers, save_handler)
 
     # Connect the stages.
@@ -176,7 +176,7 @@ def run_demo(save_workers: int) -> None:
 
 if __name__ == "__main__":
     # First run: the save stage has one worker.
-    run_demo(save_workers=1)
+    run_demo(download_workers=5, process_workers=5, save_workers=1)
 
     # Second run: the save stage has three workers.
-    run_demo(save_workers=3)
+    run_demo(download_workers=2, process_workers=4, save_workers=3)
